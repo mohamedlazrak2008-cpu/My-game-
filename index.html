@@ -3,98 +3,86 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>داما مغربية برو</title>
+    <title>داما برو - مع أصوات تفاعلية</title>
     <style>
-        :root { 
-            --board-dark: #5d3a2a; 
-            --board-light: #e0c091; 
-            --white-piece: #ffffff;
-            --black-piece: #1a1a1a; 
-        }
-        /* منع التكبير والاهتزاز */
-        * { touch-action: manipulation; -webkit-tap-highlight-color: transparent; user-select: none; }
-        
-        body { 
-            background: #0f0f0f; color: white; text-align: center; 
-            font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0;
-            overflow: hidden; /* لمنع أي حركة زائدة للصفحة */
-        }
-        
-        .status { background: #1e1e1e; padding: 15px; font-weight: bold; border-bottom: 3px solid #333; color: #f1c40f; font-size: 1.1rem; }
-        
-        .board-container { display: flex; justify-content: center; align-items: center; height: 80vh; }
-        
-        .board { 
-            display: grid; grid-template-columns: repeat(8, 1fr); 
-            width: 96vw; height: 96vw; max-width: 450px; max-height: 450px; 
-            border: 12px solid #3e2723; border-radius: 4px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
-            background: #3e2723;
-        }
-        
-        .cell { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; position: relative; }
+        :root { --board-dark: #5d3a2a; --board-light: #e0c091; }
+        * { touch-action: none; -webkit-tap-highlight-color: transparent; user-select: none; box-sizing: border-box; }
+        body { background: #1a1a1a; color: white; text-align: center; font-family: 'Segoe UI', sans-serif; margin: 0; overflow: hidden; width: 100vw; height: 100vh; }
+        .header { background: #2c2c2c; padding: 10px; border-bottom: 3px solid #444; height: 100px; }
+        .score-board { display: flex; justify-content: space-around; font-weight: bold; font-size: 1.1rem; margin-top: 10px; }
+        .score-box { color: #f1c40f; font-size: 1.3rem; }
+        .board-container { display: flex; justify-content: center; align-items: center; height: calc(100vh - 100px); padding: 10px; }
+        .board { display: grid; grid-template-columns: repeat(8, 1fr); width: 95vw; height: 95vw; max-width: 450px; max-height: 450px; border: 12px solid #3e2723; background: #3e2723; box-shadow: 0 15px 40px rgba(0,0,0,0.8); }
+        .cell { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; }
         .dark { background: var(--board-dark); }
         .light { background: var(--board-light); }
-        
-        .piece { 
-            width: 82%; height: 82%; border-radius: 50%; 
-            position: relative; box-shadow: 0 5px 0 #000;
-            transition: all 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28); 
-            cursor: pointer; z-index: 2;
-        }
-        
-        .white { 
-            background: radial-gradient(circle at 35% 35%, #ffffff, #dcdde1); 
-            border: 1px solid #ccc;
-        }
-        
-        .black { 
-            background: radial-gradient(circle at 35% 35%, #444, #000); 
-            border: 1px solid #333;
-        }
-        
-        .king::after { content: '👑'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 1.3rem; filter: drop-shadow(0 2px 2px #000); }
-        
-        .selected { transform: scale(1.1) translateY(-5px); box-shadow: 0 10px 20px rgba(241, 196, 15, 0.5) !important; border: 3px solid #f1c40f !important; z-index: 10; }
-        
-        #overlay {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.92); z-index: 100; justify-content: center; align-items: center; flex-direction: column;
-        }
-        #overlay h2 { font-size: 2.5rem; color: #f1c40f; text-shadow: 0 0 10px rgba(241,196,15,0.5); }
-        
-        .btn { padding: 15px 40px; border-radius: 30px; background: #c0392b; color: white; border: none; font-size: 1.2rem; cursor: pointer; margin-top: 20px; transition: 0.3s; }
-        .btn:active { transform: scale(0.95); }
+        .piece { width: 82%; height: 82%; border-radius: 50%; position: relative; box-shadow: inset 0 -4px 6px rgba(0,0,0,0.4), 0 5px 10px rgba(0,0,0,0.5); transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .white { background: radial-gradient(circle at 35% 35%, #ffffff, #dcdde1); border: 1px solid #999; }
+        .black { background: radial-gradient(circle at 35% 35%, #444, #000); border: 1px solid #222; }
+        .king::after { content: '👑'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 1.4rem; filter: drop-shadow(0 2px 2px #000); }
+        .selected { transform: scale(1.15); border: 3px solid #f1c40f !important; z-index: 10; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(241, 196, 15, 0.7); } 70% { box-shadow: 0 0 0 15px rgba(241, 196, 15, 0); } 100% { box-shadow: 0 0 0 0 rgba(241, 196, 15, 0); } }
+        #overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; justify-content: center; align-items: center; flex-direction: column; }
+        .btn { padding: 15px 40px; border-radius: 30px; background: #c0392b; color: white; border: none; font-size: 1.2rem; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
-    <div class="status" id="status">داما برو - دورك (الأبيض)</div>
+    <audio id="moveSound" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3"></audio>
+    <audio id="captureSound" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3"></audio>
+    <audio id="kingSound" src="https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3"></audio>
+
+    <div class="header">
+        <div id="status">دورك الآن (الأبيض)</div>
+        <div class="score-board">
+            <div>أنت: <span id="p-score" class="score-box">0</span></div>
+            <div>البوت: <span id="b-score" class="score-box">0</span></div>
+        </div>
+    </div>
+
     <div class="board-container">
         <div class="board" id="board"></div>
     </div>
+
     <div id="overlay">
-        <h2 id="winner-text">انتهت اللعبة</h2>
-        <button class="btn" onclick="location.reload()">تحدي جديد</button>
+        <h2 id="winner-text"></h2>
+        <button class="btn" onclick="resetGame()">تحدي جديد</button>
     </div>
 
     <script>
         const boardEl = document.getElementById('board');
         const statusEl = document.getElementById('status');
-        const overlay = document.getElementById('overlay');
-        const winnerText = document.getElementById('winner-text');
+        const pScoreEl = document.getElementById('p-score');
+        const bScoreEl = document.getElementById('b-score');
+        const moveSnd = document.getElementById('moveSound');
+        const captureSnd = document.getElementById('captureSound');
+        const kingSnd = document.getElementById('kingSound');
+
         let board = Array(64).fill(null);
         let turn = 'player';
         let selected = null;
-        let gameOver = false;
+        let isMultiJump = false;
+
+        let pScore = parseInt(localStorage.getItem('pScore')) || 0;
+        let bScore = parseInt(localStorage.getItem('bScore')) || 0;
+        pScoreEl.innerText = pScore; bScoreEl.innerText = bScore;
+
+        function playSnd(type) {
+            if (type === 'move') { moveSnd.currentTime = 0; moveSnd.play().catch(()=>{}); }
+            if (type === 'capture') { captureSnd.currentTime = 0; captureSnd.play().catch(()=>{}); }
+            if (type === 'king') { kingSnd.currentTime = 0; kingSnd.play().catch(()=>{}); }
+        }
 
         function init() {
+            board = Array(64).fill(null);
             for (let i = 0; i < 64; i++) {
                 let r = Math.floor(i/8), c = i%8;
-                if ((r+c)%2 !== 0) {
+                if ((r + c) % 2 !== 0) {
                     if (r < 3) board[i] = { color: 'bot', king: false };
                     else if (r > 4) board[i] = { color: 'player', king: false };
                 }
             }
+            isMultiJump = false; selected = null; turn = 'player';
+            statusEl.innerText = "دورك الآن (الأبيض)";
             render();
         }
 
@@ -102,123 +90,10 @@
             boardEl.innerHTML = '';
             board.forEach((p, i) => {
                 const cell = document.createElement('div');
-                cell.className = `cell ${(Math.floor(i/8)+i%8)%2!==0 ? 'dark':'light'}`;
+                cell.className = `cell ${(Math.floor(i / 8) + i % 8) % 2 !== 0 ? 'dark' : 'light'}`;
                 if (p) {
                     const div = document.createElement('div');
-                    div.className = `piece ${p.color==='player'?'white':'black'} ${p.king?'king':''}`;
+                    div.className = `piece ${p.color === 'player' ? 'white' : 'black'} ${p.king ? 'king' : ''}`;
                     if (selected === i) div.classList.add('selected');
                     cell.appendChild(div);
                 }
-                cell.onclick = (e) => { e.preventDefault(); handleClick(i); };
-                boardEl.appendChild(cell);
-            });
-        }
-
-        function handleClick(i) {
-            if (turn !== 'player' || gameOver) return;
-            if (board[i] && board[i].color === 'player') {
-                selected = i;
-            } else if (selected !== null) {
-                let move = validateMove(selected, i, 'player');
-                if (move) {
-                    executeMove(move);
-                    if (!checkGameOver()) {
-                        turn = 'bot';
-                        statusEl.innerText = "البوت يحلل اللوحة...";
-                        setTimeout(botAI, 800);
-                    }
-                }
-            }
-            render();
-        }
-
-        function validateMove(from, to, color) {
-            if (board[to] || to < 0 || to > 63) return null;
-            let p = board[from];
-            let r1 = Math.floor(from/8), c1 = from%8;
-            let r2 = Math.floor(to/8), c2 = to%8;
-            let dr = r2 - r1, dc = c2 - c1;
-
-            if (!p.king) {
-                // مشي عادي (ممنوع للخلف)
-                if (Math.abs(dc) === 1 && dr === (color === 'player' ? -1 : 1)) return { f: from, t: to };
-                // أكل (ممنوع للخلف)
-                if (Math.abs(dc) === 2 && dr === (color === 'player' ? -2 : 2)) {
-                    let mid = (from + to) / 2;
-                    if (board[mid] && board[mid].color !== color) return { f: from, t: to, m: mid };
-                }
-            } else {
-                // الملك حر (أمام خلف وبأي مسافة)
-                if (Math.abs(dr) === Math.abs(dc)) {
-                    let stepR = dr / Math.abs(dr), stepC = dc / Math.abs(dc);
-                    let mid = null, count = 0;
-                    for (let s = 1; s < Math.abs(dr); s++) {
-                        let idx = (r1 + s * stepR) * 8 + (c1 + s * stepC);
-                        if (board[idx]) {
-                            if (board[idx].color !== color) { count++; mid = idx; }
-                            else return null;
-                        }
-                    }
-                    if (count === 0) return { f: from, t: to };
-                    if (count === 1) return { f: from, t: to, m: mid };
-                }
-            }
-            return null;
-        }
-
-        function executeMove(m) {
-            board[m.t] = board[m.f];
-            board[m.f] = null;
-            if (m.m) board[m.m] = null;
-            if (Math.floor(m.t/8) === 0 && board[m.t].color === 'player') board[m.t].king = true;
-            if (Math.floor(m.t/8) === 7 && board[m.t].color === 'bot') board[m.t].king = true;
-            selected = null;
-        }
-
-        function botAI() {
-            if (gameOver) return;
-            let moves = [];
-            board.forEach((p, i) => {
-                if (p && p.color === 'bot') {
-                    for (let t = 0; t < 64; t++) {
-                        let m = validateMove(i, t, 'bot');
-                        if (m) {
-                            let score = 0;
-                            if (m.m) score += 100; // الأكل أولوية
-                            if (p.king) score += 50; 
-                            if (Math.floor(t/8) === 7) score += 80; // التوجه ليصبح ملكاً
-                            moves.push({ ...m, score: score });
-                        }
-                    }
-                }
-            });
-
-            if (moves.length) {
-                moves.sort((a, b) => b.score - a.score);
-                let bestMoves = moves.filter(m => m.score === moves[0].score);
-                executeMove(bestMoves[Math.floor(Math.random() * bestMoves.length)]);
-                checkGameOver();
-            }
-            turn = 'player';
-            statusEl.innerText = "دورك الآن (الأبيض)";
-            render();
-        }
-
-        function checkGameOver() {
-            let pCount = board.filter(p => p && p.color === 'player').length;
-            let bCount = board.filter(p => p && p.color === 'bot').length;
-            if (pCount === 0) { showEnd("هارد لك! فاز البوت"); return true; }
-            if (bCount === 0) { showEnd("أنت بطل! فزت على البوت"); return true; }
-            return false;
-        }
-
-        function showEnd(txt) {
-            gameOver = true;
-            winnerText.innerText = txt;
-            overlay.style.display = 'flex';
-        }
-
-        init();
-    </script>
-</body>
-</html>
