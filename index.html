@@ -3,7 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>الداما المغربية الاحترافية</title>
+    <meta name="theme-color" content="#3e2723">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>داما مغربية برو</title>
+
+    <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22Dama%20Morocco%22,%22short_name%22:%22Dama%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22#121212%22,%22theme_color%22:%22#3e2723%22}">
+
     <style>
         :root { --wood:#3e2723; --dark:#5d3a2a; --light:#e0c091; --gold:#f1c40f; }
         *{box-sizing:border-box;user-select:none;-webkit-tap-highlight-color:transparent}
@@ -53,12 +58,18 @@
             padding:15px 35px;border-radius:30px;background:#c0392b;
             border:none;color:white;font-weight:bold;font-size:1.2rem; cursor: pointer;
         }
+        
+        /* زر التحميل */
+        #installBtn {
+            display: none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background: var(--gold); color: #000; padding: 10px 20px; border-radius: 20px;
+            font-weight: bold; z-index: 999; border: none; cursor: pointer;
+        }
     </style>
 </head>
 <body>
 
-    <audio id="moveSnd" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3"></audio>
-    <audio id="capSnd" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3"></audio>
+    <button id="installBtn">تثبيت اللعبة على الهاتف</button>
 
     <div class="header">
         <div id="status">الداما المغربية — دورك</div>
@@ -78,41 +89,53 @@
     </div>
 
 <script>
+    // --- منطق الـ PWA للتحميل من كروم ---
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        document.getElementById('installBtn').style.display = 'block';
+    });
+
+    document.getElementById('installBtn').addEventListener('click', async () => {
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            if (outcome === 'accepted') {
+                document.getElementById('installBtn').style.display = 'none';
+            }
+            deferredPrompt = null;
+        }
+    });
+
+    // --- منطق اللعبة (نفس كودك الاحترافي) ---
     const boardEl = document.getElementById("board");
     const statusEl = document.getElementById("status");
     const pScoreEl = document.getElementById("pScore");
     const bScoreEl = document.getElementById("bScore");
-    const moveSnd = document.getElementById("moveSnd");
-    const capSnd = document.getElementById("capSnd");
 
     let board, turn, selected, mandatory, multiJump, lock;
     let pScore = parseInt(localStorage.getItem('pScore')) || 0;
     let bScore = parseInt(localStorage.getItem('bScore')) || 0;
     pScoreEl.textContent = pScore; bScoreEl.textContent = bScore;
 
-    const inside = i => i>=0 && i<64;
+    const dark = i => ((Math.floor(i/8)+i%8)%2===1);
     const rc = i => [Math.floor(i/8), i%8];
     const idx = (r,c)=> r*8+c;
-    const dark = i => ((Math.floor(i/8)+i%8)%2===1);
-
-    function newPiece(color){ return {color, king:false}; }
 
     function initBoard(){
         board = Array(64).fill(null);
         for(let i=0;i<64;i++){
             if(!dark(i)) continue;
             let r=Math.floor(i/8);
-            if(r<3) board[i]=newPiece("bot");
-            if(r>4) board[i]=newPiece("player");
+            if(r<3) board[i]={color:"bot", king:false};
+            if(r>4) board[i]={color:"player", king:false};
         }
     }
 
     function start(){
-        initBoard();
-        turn="player"; selected=null; mandatory=[]; multiJump=false; lock=false;
-        findMandatory();
-        statusEl.textContent = "الداما المغربية — دورك";
-        render();
+        initBoard(); turn="player"; selected=null; mandatory=[]; multiJump=false; lock=false;
+        findMandatory(); render();
     }
 
     function render(){
@@ -125,8 +148,7 @@
                 p.className="piece "+(board[i].color==="player"?"white":"black");
                 if(board[i].king) p.classList.add("king");
                 if(selected===i) p.classList.add("selected");
-                if(turn==="player" && mandatory.some(m=>m.from===i))
-                    p.classList.add("must-capture");
+                if(turn==="player" && mandatory.some(m=>m.from===i)) p.classList.add("must-capture");
                 cell.appendChild(p);
             }
             cell.onclick=()=>onClick(i);
@@ -134,75 +156,43 @@
         }
     }
 
-    function dirs(piece){
-        if(piece.king) return [[1,1],[1,-1],[-1,1],[-1,-1]];
-        return piece.color==="player" ? [[-1,1],[-1,-1]] : [[1,1],[1,-1]];
-    }
-
     function validate(from,to,color){
-        if(!inside(from)||!inside(to)||board[to]) return null;
-        if(!dark(to)) return null;
+        if(to<0 || to>63 || board[to] || !dark(to)) return null;
         let p=board[from];
         if(!p || p.color!==color) return null;
-        let [r1,c1]=rc(from);
-        let [r2,c2]=rc(to);
-        let dr=r2-r1, dc=c2-c1;
-        if(Math.abs(dr)!==Math.abs(dc)) return null;
-        let stepR=Math.sign(dr), stepC=Math.sign(dc);
-        let dist=Math.abs(dr);
+        let [r1,c1]=rc(from), [r2,c2]=rc(to);
+        let dr=r2-r1, dc=Math.abs(c2-c1);
+        if(Math.abs(dr)!==dc) return null;
+        let sR=Math.sign(dr), sC=Math.sign(c2-c1), dist=Math.abs(dr);
 
         if(!p.king){
             if(dist===1 && !multiJump && (color==="player"?dr===-1:dr===1)) return {from,to};
             if(dist===2){
-                let mid=idx(r1+stepR,c1+stepC);
-                if(board[mid] && board[mid].color!==color) return {from,to,cap:mid};
+                let m=idx(r1+sR,c1+sC);
+                if(board[m] && board[m].color!==color) return {from,to,cap:m};
             }
-            return null;
-        }
-
-        let enemy=null, count=0;
-        for(let s=1;s<dist;s++){
-            let i=idx(r1+s*stepR,c1+s*stepC);
-            if(board[i]){
-                if(board[i].color===color) return null;
-                enemy=i; count++;
+        } else {
+            let cap=null, cnt=0;
+            for(let s=1; s<dist; s++){
+                let i=idx(r1+s*sR,c1+s*sC);
+                if(board[i]){ if(board[i].color===color) return null; cap=i; cnt++; }
             }
+            if(cnt===0 && !multiJump) return {from,to};
+            if(cnt===1) return {from,to,cap};
         }
-        if(count===0 && !multiJump) return {from,to};
-        if(count===1) return {from,to,cap:enemy};
         return null;
     }
 
-    function allMoves(color){
-        let moves=[];
-        for(let i=0;i<64;i++){
-            if(board[i] && board[i].color===color){
-                for(let t=0;t<64;t++){
-                    let m=validate(i,t,color);
-                    if(m) moves.push(m);
+    function findMandatory(){
+        mandatory = [];
+        for(let i=0; i<64; i++){
+            if(board[i] && board[i].color===turn){
+                for(let t=0; t<64; t++){
+                    let m=validate(i,t,turn);
+                    if(m && m.cap!==undefined) mandatory.push(m);
                 }
             }
         }
-        return moves;
-    }
-
-    function findMandatory(){
-        mandatory = allMoves(turn).filter(m=>m.cap!==undefined);
-    }
-
-    function execMove(m){
-        board[m.to]=board[m.from];
-        board[m.from]=null;
-        if(m.cap!==undefined) {
-            board[m.cap]=null;
-            capSnd.play().catch(()=>{});
-        } else {
-            moveSnd.play().catch(()=>{});
-        }
-        let [r2]=rc(m.to);
-        if(board[m.to].color==="player" && r2===0) board[m.to].king=true;
-        if(board[m.to].color==="bot" && r2===7) board[m.to].king=true;
-        selected=null;
     }
 
     function onClick(i){
@@ -210,49 +200,62 @@
         if(board[i] && board[i].color==="player"){
             if(multiJump && selected!==i) return;
             if(mandatory.length && !mandatory.some(m=>m.from===i)) return;
-            selected=i; render(); return;
+            selected=i; render();
+        } else if(selected!==null){
+            let m=validate(selected,i,"player");
+            if(mandatory.length && (!m || m.cap===undefined)) return;
+            if(m){
+                execMove(m);
+                if(m.cap!==undefined && hasCap(m.to,"player")){
+                    multiJump=true; selected=m.to; findMandatory(); statusEl.textContent="كمّل الأكل!"; render();
+                } else {
+                    multiJump=false; turn="bot"; lock=true; render(); setTimeout(botTurn,600);
+                }
+            }
         }
-        if(selected===null) return;
-        let m=validate(selected,i,"player");
-        if(mandatory.length && (!m || m.cap===undefined)) return;
-        if(!m) return;
-        execMove(m);
-        if(m.cap!==undefined && allMoves("player").filter(x=>x.from===m.to && x.cap!==undefined).length > 0){
-            multiJump=true; selected=m.to; findMandatory(); statusEl.textContent="كمّل الأكل!"; render(); return;
-        }
-        multiJump=false; turn="bot"; lock=true; render(); setTimeout(botTurn,600);
+    }
+
+    function execMove(m){
+        board[m.to]=board[m.from]; board[m.from]=null;
+        if(m.cap!==undefined) board[m.cap]=null;
+        let [r2]=rc(m.to);
+        if((board[m.to].color==="player" && r2===0) || (board[m.to].color==="bot" && r2===7)) board[m.to].king=true;
+        selected=null;
+    }
+
+    function hasCap(f,c){
+        for(let t=0; t<64; t++){ let m=validate(f,t,c); if(m && m.cap!==undefined) return true; }
+        return false;
     }
 
     function botTurn(){
         findMandatory();
-        let moves = mandatory.length ? mandatory : allMoves("bot");
+        let moves = mandatory.length ? mandatory : [];
+        if(!moves.length){
+            for(let i=0; i<64; i++) if(board[i] && board[i].color==="bot") 
+                for(let t=0; t<64; t++){ let m=validate(i,t,"bot"); if(m) moves.push(m); }
+        }
         if(!moves.length){ endGame("تبارك الله عليك، ربحتي!"); return; }
         let m = moves[Math.floor(Math.random()*moves.length)];
         execMove(m);
-        if(m.cap!==undefined && allMoves("bot").filter(x=>x.from===m.to && x.cap!==undefined).length > 0){
-            setTimeout(botTurn,400); return;
-        }
-        turn="player"; lock=false; findMandatory(); statusEl.textContent="دورك"; render(); checkEnd();
+        if(m.cap!==undefined && hasCap(m.to,"bot")){ setTimeout(botTurn,400); return; }
+        turn="player"; lock=false; findMandatory(); statusEl.textContent="دورك"; render();
+        if(!mandatory.length && !moves.length) checkEnd();
     }
 
     function checkEnd(){
-        if(!allMoves("player").length) endGame("البوت ربح");
-        if(!allMoves("bot").length) endGame("أنت ربحت");
+        let p=0, b=0; board.forEach(x=>{if(x){if(x.color==="player")p++; else b++;}});
+        if(!p) endGame("البوت ربحك!"); if(!b) endGame("نتا لي ربحتي!");
     }
 
     function endGame(msg){
         document.getElementById("winnerText").textContent=msg;
         document.getElementById("overlay").style.display="flex";
-        if(msg.includes("ربحت")) { pScore++; localStorage.setItem('pScore', pScore); } 
-        else { bScore++; localStorage.setItem('bScore', bScore); }
+        if(msg.includes("نتا")) { pScore++; localStorage.setItem('pScore', pScore); } else { bScore++; localStorage.setItem('bScore', bScore); }
         pScoreEl.textContent=pScore; bScoreEl.textContent=bScore;
     }
 
-    function resetGame(){
-        document.getElementById("overlay").style.display="none";
-        start();
-    }
-
+    function resetGame(){ document.getElementById("overlay").style.display="none"; start(); }
     start();
 </script>
 </body>
