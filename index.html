@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>داما مغربية</title>
+    <style>
+        body { background: #1a1a1a; color: white; text-align: center; font-family: sans-serif; margin: 0; padding: 10px; }
+        .board { display: grid; grid-template-columns: repeat(8, 12.5vw); grid-template-rows: repeat(8, 12.5vw); width: 95vw; height: 95vw; max-width: 400px; max-height: 400px; margin: 20px auto; border: 5px solid #333; }
+        .cell { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; position: relative; }
+        .black { background: #769656; }
+        .white { background: #eeeed2; }
+        .piece { width: 80%; height: 80%; border-radius: 50%; cursor: pointer; z-index: 10; touch-action: none; }
+        .red { background: radial-gradient(circle, #ff5f6d, #ffc371); border: 2px solid #fff; }
+        .blue { background: radial-gradient(circle, #2193b0, #6dd5ed); border: 2px solid #fff; }
+        .status { font-size: 1.2rem; margin: 10px; color: #2ecc71; }
+    </style>
+</head>
+<body>
+    <h1>داما مغربية</h1>
+    <div class="status" id="status">دورك الآن (الأحمر)</div>
+    <div class="board" id="board"></div>
+
+    <script>
+        const boardEl = document.getElementById('board');
+        const statusEl = document.getElementById('status');
+
+        function createBoard() {
+            for (let i = 0; i < 64; i++) {
+                const row = Math.floor(i / 8);
+                const col = i % 8;
+                const cell = document.createElement('div');
+                cell.className = `cell ${(row + col) % 2 === 0 ? 'white' : 'black'}`;
+                
+                if ((row + col) % 2 !== 0) {
+                    if (row < 3) {
+                        const piece = document.createElement('div');
+                        piece.className = 'piece blue';
+                        cell.appendChild(piece);
+                    } else if (row > 4) {
+                        const piece = document.createElement('div');
+                        piece.className = 'piece red';
+                        cell.appendChild(piece);
+                    }
+                }
+                boardEl.appendChild(cell);
+            }
+        }
+
+        createBoard();
+    </script>
+</body>
+</html>
