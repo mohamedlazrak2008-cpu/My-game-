@@ -1,202 +1,314 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>داما برو العالمية - النسخة المصلحة</title>
-    <style>
-        :root { 
-            --wood: #3e2723;
-            --dark-cell: #5d3a2a;
-            --light-cell: #e0c091;
-            --white-piece: radial-gradient(circle at 35% 35%, #ffffff, #dcdde1);
-            --black-piece: radial-gradient(circle at 35% 35%, #444, #000);
-            --gold: #f1c40f;
-        }
-        * { touch-action: none; -webkit-tap-highlight-color: transparent; user-select: none; box-sizing: border-box; }
-        body { background: #121212; color: white; text-align: center; font-family: sans-serif; margin: 0; overflow: hidden; display: flex; flex-direction: column; height: 100vh; }
-        
-        .header { background: #1e1e1e; padding: 15px; border-bottom: 3px solid #333; }
-        .score-board { display: flex; justify-content: space-around; font-weight: bold; margin-top: 10px; }
-        .score-item { background: #2c2c2c; padding: 5px 15px; border-radius: 15px; border: 1px solid #444; }
-        .score-val { color: var(--gold); font-size: 1.2rem; margin: 0 5px; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>الداما المغربية الاحترافية</title>
 
-        .board-container { flex: 1; display: flex; justify-content: center; align-items: center; padding: 10px; }
-        .board { 
-            display: grid; grid-template-columns: repeat(8, 1fr); 
-            width: 95vw; height: 95vw; max-width: 450px; max-height: 450px; 
-            border: 8px solid var(--wood); background: var(--wood);
-            box-shadow: 0 10px 40px rgba(0,0,0,0.8); border-radius: 4px;
-        }
-        
-        .cell { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; position: relative; }
-        .dark { background: var(--dark-cell); }
-        .light { background: var(--light-cell); }
-        
-        .piece { 
-            width: 85%; height: 85%; border-radius: 50%; 
-            position: relative; box-shadow: inset 0 -4px 6px rgba(0,0,0,0.4), 0 5px 10px rgba(0,0,0,0.5);
-            transition: all 0.2s; z-index: 2;
-        }
-        .white { background: var(--white-piece); border: 1px solid #999; }
-        .black { background: var(--black-piece); border: 1px solid #222; }
-        .king::after { content: '👑'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 1.4rem; filter: drop-shadow(0 2px 2px #000); }
-        
-        .selected { transform: scale(1.1); border: 3px solid var(--gold) !important; box-shadow: 0 0 15px var(--gold); z-index: 10; }
+<style>
+:root { --wood:#3e2723; --dark:#5d3a2a; --light:#e0c091; --gold:#f1c40f; }
+*{box-sizing:border-box;user-select:none;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:#121212;color:#fff;font-family:sans-serif;
+display:flex;flex-direction:column;height:100vh;text-align:center}
 
-        #overlay { 
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center; flex-direction: column; 
-        }
-        .btn { padding: 12px 30px; border-radius: 25px; background: #c0392b; color: white; border: none; font-size: 1.1rem; cursor: pointer; font-weight: bold; margin-top: 20px; }
-    </style>
+.header{background:#1e1e1e;padding:10px;border-bottom:3px solid #333}
+.score-board{display:flex;justify-content:space-around;margin-top:5px}
+.score-item{background:#2c2c2c;padding:6px 14px;border-radius:12px;border:1px solid #444}
+.score-val{color:var(--gold);font-weight:bold}
+
+.board-container{flex:1;display:flex;justify-content:center;align-items:center;padding:10px}
+.board{
+display:grid;grid-template-columns:repeat(8,1fr);
+width:95vw;height:95vw;max-width:460px;max-height:460px;
+border:8px solid var(--wood);background:var(--wood);
+box-shadow:0 10px 40px rgba(0,0,0,.8)
+}
+
+.cell{display:flex;align-items:center;justify-content:center}
+.dark{background:var(--dark)}
+.light{background:var(--light)}
+
+.piece{
+width:84%;height:84%;border-radius:50%;
+box-shadow:inset 0 -4px 6px rgba(0,0,0,.4),0 5px 10px rgba(0,0,0,.5);
+transition:.18s;position:relative
+}
+.white{background:radial-gradient(circle at 35% 35%,#fff,#ccc)}
+.black{background:radial-gradient(circle at 35% 35%,#444,#000)}
+
+.king::after{
+content:"👑";position:absolute;top:50%;left:50%;
+transform:translate(-50%,-50%);font-size:1.3rem
+}
+
+.selected{transform:scale(1.12);outline:3px solid var(--gold)}
+.must-capture{outline:3px solid #e74c3c}
+
+#overlay{
+display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);
+z-index:1000;flex-direction:column;justify-content:center;align-items:center
+}
+.btn{
+padding:12px 30px;border-radius:25px;background:#c0392b;
+border:none;color:white;font-weight:bold;font-size:1.1rem
+}
+</style>
 </head>
+
 <body>
 
-    <div class="header">
-        <div id="status">داما برو - دورك</div>
-        <div class="score-board">
-            <div class="score-item">أنت:<span id="p-score" class="score-val">0</span></div>
-            <div class="score-item">البوت:<span id="b-score" class="score-val">0</span></div>
-        </div>
-    </div>
+<div class="header">
+<div id="status">الداما المغربية — دورك</div>
+<div class="score-board">
+<div class="score-item">أنت <span id="pScore" class="score-val">0</span></div>
+<div class="score-item">البوت <span id="bScore" class="score-val">0</span></div>
+</div>
+</div>
 
-    <div class="board-container">
-        <div class="board" id="board"></div>
-    </div>
+<div class="board-container">
+<div id="board" class="board"></div>
+</div>
 
-    <div id="overlay">
-        <h2 id="winner-text">مبروك الفوز!</h2>
-        <button class="btn" onclick="resetGame()">لعب مرة أخرى</button>
-    </div>
+<div id="overlay">
+<h2 id="winnerText"></h2>
+<button class="btn" onclick="resetGame()">لعب من جديد</button>
+</div>
 
-    <script>
-        const boardEl = document.getElementById('board');
-        const statusEl = document.getElementById('status');
-        const pScoreEl = document.getElementById('p-score');
-        const bScoreEl = document.getElementById('b-score');
+<script>
+const boardEl = document.getElementById("board");
+const statusEl = document.getElementById("status");
+const pScoreEl = document.getElementById("pScore");
+const bScoreEl = document.getElementById("bScore");
 
-        let board = Array(64).fill(null);
-        let turn = 'player';
-        let selected = null;
-        let pScore = parseInt(localStorage.getItem('pScore')) || 0;
-        let bScore = parseInt(localStorage.getItem('bScore')) || 0;
+let board, turn, selected, mandatory, multiJump, lock;
+let pScore=0, bScore=0;
 
-        pScoreEl.innerText = pScore; bScoreEl.innerText = bScore;
+const inside = i => i>=0 && i<64;
+const rc = i => [Math.floor(i/8), i%8];
+const idx = (r,c)=> r*8+c;
+const dark = i => ((Math.floor(i/8)+i%8)%2===1);
 
-        function init() {
-            board = Array(64).fill(null);
-            for (let i = 0; i < 64; i++) {
-                let r = Math.floor(i/8), c = i%8;
-                if ((r + c) % 2 !== 0) {
-                    if (r < 3) board[i] = { color: 'bot', king: false };
-                    else if (r > 4) board[i] = { color: 'player', king: false };
-                }
-            }
-            render();
-        }
+function newPiece(color){ return {color, king:false}; }
 
-        function render() {
-            boardEl.innerHTML = '';
-            board.forEach((p, i) => {
-                const cell = document.createElement('div');
-                cell.className = `cell ${(Math.floor(i/8)+i%8)%2!==0 ? 'dark':'light'}`;
-                if (p) {
-                    const div = document.createElement('div');
-                    div.className = `piece ${p.color==='player'?'white':'black'} ${p.king?'king':''}`;
-                    if (selected === i) div.classList.add('selected');
-                    cell.appendChild(div);
-                }
-                cell.onclick = () => handleClick(i);
-                boardEl.appendChild(cell);
-            });
-        }
+function initBoard(){
+board = Array(64).fill(null);
+for(let i=0;i<64;i++){
+ if(!dark(i)) continue;
+ let r=Math.floor(i/8);
+ if(r<3) board[i]=newPiece("bot");
+ if(r>4) board[i]=newPiece("player");
+}
+}
 
-        function handleClick(i) {
-            if (turn !== 'player') return;
-            if (board[i] && board[i].color === 'player') {
-                selected = i;
-            } else if (selected !== null) {
-                let move = validate(selected, i, 'player');
-                if (move) {
-                    execute(move);
-                    turn = 'bot';
-                    statusEl.innerText = "البوت يفكر...";
-                    setTimeout(botMove, 700);
-                }
-            }
-            render();
-        }
+function start(){
+initBoard();
+turn="player";
+selected=null;
+mandatory=[];
+multiJump=false;
+lock=false;
+findMandatory();
+render();
+}
 
-        function validate(f, t, color) {
-            if (board[t]) return null;
-            let p = board[f], r1 = Math.floor(f/8), c1 = f%8, r2 = Math.floor(t/8), c2 = t%8;
-            let dr = r2 - r1, dc = Math.abs(c2 - c1);
-            if (Math.abs(dr) !== dc) return null;
+function render(){
+boardEl.innerHTML="";
+for(let i=0;i<64;i++){
+ let cell=document.createElement("div");
+ cell.className="cell "+(dark(i)?"dark":"light");
+ if(board[i]){
+  let p=document.createElement("div");
+  p.className="piece "+(board[i].color==="player"?"white":"black");
+  if(board[i].king) p.classList.add("king");
+  if(selected===i) p.classList.add("selected");
+  if(turn==="player" && mandatory.some(m=>m.from===i))
+      p.classList.add("must-capture");
+  cell.appendChild(p);
+ }
+ cell.onclick=()=>onClick(i);
+ boardEl.appendChild(cell);
+}
+}
 
-            if (!p.king) {
-                if (dc === 1 && dr === (color==='player'?-1:1)) return {f, t};
-                if (dc === 2) {
-                    let m = (f + t) / 2;
-                    if (board[m] && board[m].color !== color) return {f, t, m};
-                }
-            } else {
-                let sR = dr/Math.abs(dr), sC = (c2-c1)/dc, m=null, count=0;
-                for (let s=1; s<Math.abs(dr); s++) {
-                    let idx = (r1+s*sR)*8 + (c1+s*sC);
-                    if (board[idx]) { if (board[idx].color!==color) {count++; m=idx;} else return null; }
-                }
-                if (count <= 1) return {f, t, m};
-            }
-            return null;
-        }
+function dirs(piece,colorOnly=false){
+if(piece.king) return [[1,1],[1,-1],[-1,1],[-1,-1]];
+return piece.color==="player" ? [[-1,1],[-1,-1]] : [[1,1],[1,-1]];
+}
 
-        function execute(m) {
-            board[m.t] = board[m.f]; board[m.f] = null;
-            if (m.m) board[m.m] = null;
-            if (Math.floor(m.t/8) === 0 && board[m.t].color === 'player') board[m.t].king = true;
-            if (Math.floor(m.t/8) === 7 && board[m.t].color === 'bot') board[m.t].king = true;
-            selected = null; render(); checkWin();
-        }
+function validate(from,to,color){
+if(!inside(from)||!inside(to)||board[to]) return null;
+if(!dark(to)) return null;
 
-        function botMove() {
-            let moves = [];
-            board.forEach((p, i) => {
-                if (p && p.color === 'bot') {
-                    for (let t=0; t<64; t++) {
-                        let m = validate(i, t, 'bot');
-                        if (m) moves.push(m);
-                    }
-                }
-            });
-            if (moves.length) {
-                let jumps = moves.filter(m => m.m);
-                let final = jumps.length ? jumps[Math.floor(Math.random()*jumps.length)] : moves[Math.floor(Math.random()*moves.length)];
-                execute(final);
-            }
-            turn = 'player'; statusEl.innerText = "دورك الآن"; render();
-        }
+let p=board[from];
+if(!p || p.color!==color) return null;
 
-        function checkWin() {
-            let p = board.filter(x => x && x.color==='player').length;
-            let b = board.filter(x => x && x.color==='bot').length;
-            if (p === 0) endGame('bot');
-            else if (b === 0) endGame('player');
-        }
+let [r1,c1]=rc(from);
+let [r2,c2]=rc(to);
+let dr=r2-r1, dc=c2-c1;
+if(Math.abs(dr)!==Math.abs(dc)) return null;
 
-        function endGame(w) {
-            if (w === 'player') { pScore++; localStorage.setItem('pScore', pScore); document.getElementById('winner-text').innerText="بطل! فزت"; }
-            else { bScore++; localStorage.setItem('bScore', bScore); document.getElementById('winner-text').innerText="هارد لك! فاز البوت"; }
-            pScoreEl.innerText = pScore; bScoreEl.innerText = bScore;
-            document.getElementById('overlay').style.display = 'flex';
-        }
+let stepR=Math.sign(dr), stepC=Math.sign(dc);
+let dist=Math.abs(dr);
 
-        function resetGame() {
-            document.getElementById('overlay').style.display = 'none';
-            init();
-        }
+if(!p.king){
+ if(dist===1 && !multiJump && dirs(p).some(d=>d[0]===stepR && d[1]===stepC))
+     return {from,to};
+ if(dist===2){
+   let mid=idx(r1+stepR,c1+stepC);
+   if(board[mid] && board[mid].color!==color)
+       return {from,to,cap:mid};
+ }
+ return null;
+}
 
-        init();
-    </script>
+let enemy=null, count=0;
+for(let s=1;s<dist;s++){
+ let i=idx(r1+s*stepR,c1+s*stepC);
+ if(board[i]){
+   if(board[i].color===color) return null;
+   enemy=i; count++;
+ }
+}
+if(count===0 && !multiJump) return {from,to};
+if(count===1) return {from,to,cap:enemy};
+return null;
+}
+
+function allMoves(color){
+let moves=[];
+for(let i=0;i<64;i++){
+ if(board[i] && board[i].color===color){
+  for(let t=0;t<64;t++){
+    let m=validate(i,t,color);
+    if(m) moves.push(m);
+  }
+ }
+}
+return moves;
+}
+
+function findMandatory(){
+mandatory = allMoves(turn).filter(m=>m.cap!==undefined);
+}
+
+function promote(i){
+let [r]=rc(i);
+if(board[i].king) return;
+if(board[i].color==="player" && r===0) board[i].king=true;
+if(board[i].color==="bot" && r===7) board[i].king=true;
+}
+
+function execMove(m){
+board[m.to]=board[m.from];
+board[m.from]=null;
+if(m.cap!==undefined) board[m.cap]=null;
+promote(m.to);
+selected=null;
+}
+
+function moreJump(i,color){
+for(let t=0;t<64;t++){
+ let m=validate(i,t,color);
+ if(m && m.cap!==undefined) return true;
+}
+return false;
+}
+
+function onClick(i){
+if(lock || turn!=="player") return;
+
+if(board[i] && board[i].color==="player"){
+ if(multiJump && selected!==i) return;
+ if(mandatory.length && !mandatory.some(m=>m.from===i)){
+  statusEl.textContent="الأكل إجباري";
+  return;
+ }
+ selected=i; render(); return;
+}
+
+if(selected===null) return;
+
+let m=validate(selected,i,"player");
+if(mandatory.length && (!m || m.cap===undefined)){
+ statusEl.textContent="يجب الأكل";
+ return;
+}
+if(!m) return;
+
+execMove(m);
+
+if(m.cap!==undefined && moreJump(m.to,"player")){
+ multiJump=true;
+ selected=m.to;
+ mandatory=[{from:m.to}];
+ statusEl.textContent="كمّل الأكل";
+ render();
+ return;
+}
+
+multiJump=false;
+turn="bot";
+lock=true;
+render();
+setTimeout(botTurn,500);
+}
+
+function botTurn(){
+findMandatory();
+let moves = mandatory.length ? mandatory : allMoves("bot");
+if(!moves.length){ endGame("تبارك الله عليك، ربحتي!"); return; }
+
+moves.sort((a,b)=>{
+ let scoreA = (a.cap!==undefined?10:0) + (reachKing(a,"bot")?3:0);
+ let scoreB = (b.cap!==undefined?10:0) + (reachKing(b,"bot")?3:0);
+ return scoreB-scoreA;
+});
+
+let m=moves[0];
+execMove(m);
+
+if(m.cap!==undefined && moreJump(m.to,"bot")){
+ setTimeout(botTurn,350);
+ return;
+}
+
+turn="player";
+lock=false;
+findMandatory();
+statusEl.textContent="دورك";
+render();
+checkEnd();
+}
+
+function reachKing(m,color){
+let r=Math.floor(m.to/8);
+return (color==="bot" && r===7) || (color==="player" && r===0);
+}
+
+function checkEnd(){
+let p=board.filter(x=>x&&x.color==="player").length;
+let b=board.filter(x=>x&&x.color==="bot").length;
+if(!p) endGame("البوت ربح");
+else if(!b) endGame("أنت ربحت");
+else if(!allMoves(turn).length){
+ endGame(turn==="player"?"لا توجد حركات — خسرت":"البوت علق — ربحت");
+}
+}
+
+function endGame(msg){
+document.getElementById("winnerText").textContent=msg;
+document.getElementById("overlay").style.display="flex";
+if(msg.includes("ربحت")) pScore++; else bScore++;
+pScoreEl.textContent=pScore;
+bScoreEl.textContent=bScore;
+}
+
+function resetGame(){
+document.getElementById("overlay").style.display="none";
+start();
+}
+
+start();
+</script>
 </body>
 </html>
