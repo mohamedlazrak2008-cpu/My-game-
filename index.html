@@ -1,275 +1,237 @@
-
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
-<https://cdn-icons-png.flaticon.com/512/3211/3211231.png>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dama Morocco Pro</title>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#3e2723">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>Dama Morocco Pro</title>
 
-<meta name="theme-color" content="#3e2723">
+    <link rel="manifest" href='data:application/manifest+json,{"name":"Dama Morocco","short_name":"Dama","start_url":".","display":"standalone","background_color":"#121212","theme_color":"#3e2723","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/3211/3211231.png","sizes":"512x512","type":"image/png"}]}'>
 
-<link rel="manifest" href="manifest.json">
-
-<style>
-:root{--wood:#3e2723;--dark:#5d3a2a;--light:#e0c091;--gold:#f1c40f}
-*{box-sizing:border-box;user-select:none}
-body{margin:0;background:#121212;color:#fff;font-family:system-ui;
-display:flex;flex-direction:column;height:100vh;text-align:center}
-
-.header{background:#1e1e1e;padding:10px;border-bottom:3px solid #333}
-.score-board{display:flex;justify-content:space-around;margin-top:6px}
-.score-item{background:#2c2c2c;padding:6px 14px;border-radius:12px;border:1px solid #444}
-.score-val{color:var(--gold);font-weight:bold}
-
-.board-wrap{flex:1;display:flex;justify-content:center;align-items:center}
-.board{
-display:grid;grid-template-columns:repeat(8,1fr);
-width:92vw;height:92vw;max-width:460px;max-height:460px;
-border:10px solid var(--wood);background:var(--wood);
-box-shadow:0 20px 60px rgba(0,0,0,.8)
-}
-
-.cell{display:flex;align-items:center;justify-content:center}
-.dark{background:var(--dark)}
-.light{background:var(--light)}
-
-.piece{
-width:82%;height:82%;border-radius:50%;
-transition:.18s;position:relative
-}
-.white{background:radial-gradient(circle,#fff,#bbb)}
-.black{background:radial-gradient(circle,#444,#000)}
-
-.king::after{content:"👑";position:absolute;top:50%;left:50%;
-transform:translate(-50%,-50%)}
-
-.sel{outline:3px solid var(--gold);transform:scale(1.12)}
-.must{outline:3px solid #ff4757}
-
-#overlay{
-display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);
-flex-direction:column;justify-content:center;align-items:center
-}
-
-.btn{padding:14px 30px;border-radius:30px;background:#c0392b;
-color:white;border:none;font-weight:bold;font-size:1.1rem}
-</style>
+    <style>
+        :root{--wood:#3e2723;--dark:#5d3a2a;--light:#e0c091;--gold:#f1c40f}
+        *{box-sizing:border-box;user-select:none; -webkit-tap-highlight-color:transparent;}
+        body{margin:0;background:#121212;color:#fff;font-family:system-ui; display:flex;flex-direction:column;height:100vh;text-align:center; overflow:hidden;}
+        .header{background:#1e1e1e;padding:10px;border-bottom:3px solid #333}
+        .score-board{display:flex;justify-content:space-around;margin-top:6px}
+        .score-item{background:#2c2c2c;padding:6px 14px;border-radius:12px;border:1px solid #444}
+        .score-val{color:var(--gold);font-weight:bold}
+        .board-wrap{flex:1;display:flex;justify-content:center;align-items:center}
+        .board{display:grid;grid-template-columns:repeat(8,1fr); width:92vw;height:92vw;max-width:460px;max-height:460px; border:10px solid var(--wood);background:var(--wood); box-shadow:0 20px 60px rgba(0,0,0,.8)}
+        .cell{display:flex;align-items:center;justify-content:center}
+        .dark{background:var(--dark)}
+        .light{background:var(--light)}
+        .piece{width:82%;height:82%;border-radius:50%; transition:.18s;position:relative}
+        .white{background:radial-gradient(circle,#fff,#bbb)}
+        .black{background:radial-gradient(circle,#444,#000)}
+        .king::after{content:"👑";position:absolute;top:50%;left:50%; transform:translate(-50%,-50%)}
+        .sel{outline:3px solid var(--gold);transform:scale(1.12)}
+        .must{outline:3px solid #ff4757}
+        #overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.9); flex-direction:column;justify-content:center;align-items:center}
+        .btn{padding:14px 30px;border-radius:30px;background:#c0392b; color:white;border:none;font-weight:bold;font-size:1.1rem}
+    </style>
 </head>
 
 <body>
+    <div class="header">
+        <div id="status">الداما المغربية — دورك</div>
+        <div class="score-board">
+            <div class="score-item">أنت <span id="ps" class="score-val">0</span></div>
+            <div class="score-item">البوت <span id="bs" class="score-val">0</span></div>
+        </div>
+    </div>
 
-<div class="header">
-<div id="status">الداما المغربية — دورك</div>
-<div class="score-board">
-<div class="score-item">أنت <span id="ps" class="score-val">0</span></div>
-<div class="score-item">البوت <span id="bs" class="score-val">0</span></div>
-</div>
-</div>
+    <div class="board-wrap"><div id="board" class="board"></div></div>
 
-<div class="board-wrap"><div id="board" class="board"></div></div>
-
-<div id="overlay">
-<h2 id="win"></h2>
-<button class="btn" onclick="resetGame()">لعب من جديد</button>
-</div>
+    <div id="overlay">
+        <h2 id="win"></h2>
+        <button class="btn" onclick="resetGame()">لعب من جديد</button>
+    </div>
 
 <script>
-if('serviceWorker' in navigator){
- navigator.serviceWorker.register('sw.js');
-}
+    // استدعاء ملف sw.js بشكل صحيح لتمكين التثبيت
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js').then(() => {
+            console.log("Service Worker Registered");
+        });
+    }
 
-const B=document.getElementById("board");
-const statusEl=document.getElementById("status");
-const psEl=document.getElementById("ps");
-const bsEl=document.getElementById("bs");
+    const B=document.getElementById("board");
+    const statusEl=document.getElementById("status");
+    const psEl=document.getElementById("ps");
+    const bsEl=document.getElementById("bs");
 
-let board,turn,sel,mandatory=[],multi=false,lock=false;
+    let board,turn,sel,mandatory=[],multi=false,lock=false;
+    let ps=+localStorage.ps||0;
+    let bs=+localStorage.bs||0;
+    psEl.textContent=ps; bsEl.textContent=bs;
 
-let ps=+localStorage.ps||0;
-let bs=+localStorage.bs||0;
-psEl.textContent=ps; bsEl.textContent=bs;
+    const dark=i=>((i>>3)+i)%2===1;
+    const rc=i=>[i>>3,i%8];
+    const id=(r,c)=>r*8+c;
 
-const dark=i=>((i>>3)+i)%2===1;
-const rc=i=>[i>>3,i%8];
-const id=(r,c)=>r*8+c;
+    function init(){
+        board=Array(64).fill(null);
+        for(let i=0;i<64;i++){
+            if(!dark(i)) continue;
+            let r=i>>3;
+            if(r<3) board[i]={c:"bot",k:0};
+            if(r>4) board[i]={c:"player",k:0};
+        }
+        turn="player"; sel=null; multi=false; lock=false;
+        scanMandatory(); draw();
+    }
 
-function init(){
-board=Array(64).fill(null);
-for(let i=0;i<64;i++){
- if(!dark(i)) continue;
- let r=i>>3;
- if(r<3) board[i]={c:"bot",k:0};
- if(r>4) board[i]={c:"player",k:0};
-}
-turn="player"; sel=null; multi=false; lock=false;
-scanMandatory(); draw();
-}
+    function draw(){
+        B.innerHTML="";
+        for(let i=0;i<64;i++){
+            let d=document.createElement("div");
+            d.className="cell "+(dark(i)?"dark":"light");
+            if(board[i]){
+                let p=document.createElement("div");
+                p.className="piece "+(board[i].c==="player"?"white":"black");
+                if(board[i].k) p.classList.add("king");
+                if(sel===i) p.classList.add("sel");
+                if(turn==="player" && mandatory.some(m=>m.f===i)) p.classList.add("must");
+                d.appendChild(p);
+            }
+            d.onclick=()=>clickCell(i);
+            B.appendChild(d);
+        }
+    }
 
-function draw(){
-B.innerHTML="";
-for(let i=0;i<64;i++){
- let d=document.createElement("div");
- d.className="cell "+(dark(i)?"dark":"light");
- if(board[i]){
-  let p=document.createElement("div");
-  p.className="piece "+(board[i].c==="player"?"white":"black");
-  if(board[i].k) p.classList.add("king");
-  if(sel===i) p.classList.add("sel");
-  if(turn==="player" && mandatory.some(m=>m.f===i)) p.classList.add("must");
-  d.appendChild(p);
- }
- d.onclick=()=>clickCell(i);
- B.appendChild(d);
-}
-}
+    function valMove(f,t,color){
+        if(!dark(t)||board[t]) return null;
+        let p=board[f]; if(!p||p.c!==color) return null;
+        let [r1,c1]=rc(f),[r2,c2]=rc(t);
+        let dr=r2-r1, dc=c2-c1;
+        if(Math.abs(dr)!==Math.abs(dc)) return null;
+        let sr=Math.sign(dr), sc=Math.sign(dc), dist=Math.abs(dr);
 
-function valMove(f,t,color){
-if(!dark(t)||board[t]) return null;
-let p=board[f]; if(!p||p.c!==color) return null;
+        if(!p.k){
+            if(dist===1 && !multi && (color==="player"?sr===-1:sr===1)) return {f,t};
+            if(dist===2){
+                let m=id(r1+sr,c1+sc);
+                if(board[m] && board[m].c!==color) return {f,t,cap:m};
+            }
+            return null;
+        }
 
-let [r1,c1]=rc(f),[r2,c2]=rc(t);
-let dr=r2-r1, dc=c2-c1;
-if(Math.abs(dr)!==Math.abs(dc)) return null;
+        let cap=null,count=0;
+        for(let s=1;s<dist;s++){
+            let i=id(r1+s*sr,c1+s*sc);
+            if(board[i]){
+                if(board[i].c===color) return null;
+                if(cap!==null) return null;
+                cap=i; count++;
+            }
+        }
+        if(count===0 && !multi) return {f,t};
+        if(count===1) return {f,t,cap};
+        return null;
+    }
 
-let sr=Math.sign(dr), sc=Math.sign(dc), dist=Math.abs(dr);
+    function scanMandatory(){
+        mandatory=[];
+        for(let i=0;i<64;i++)
+            if(board[i] && board[i].c===turn)
+                for(let t=0;t<64;t++){
+                    let m=valMove(i,t,turn);
+                    if(m&&m.cap!==undefined) mandatory.push(m);
+                }
+    }
 
-if(!p.k){
- if(dist===1 && !multi && (color==="player"?sr===-1:sr===1))
-  return {f,t};
- if(dist===2){
-  let m=id(r1+sr,c1+sc);
-  if(board[m] && board[m].c!==color) return {f,t,cap:m};
- }
- return null;
-}
+    function clickCell(i){
+        if(lock||turn!=="player") return;
+        if(board[i] && board[i].c==="player"){
+            if(multi && sel!==i) return;
+            if(mandatory.length && !mandatory.some(m=>m.f===i)) return;
+            sel=i; draw(); return;
+        }
+        if(sel===null) return;
+        let m=valMove(sel,i,"player");
+        if(mandatory.length && (!m||m.cap===undefined)) return;
+        if(!m) return;
+        doMove(m);
+        if(m.cap!==undefined && hasCap(m.t,"player")){
+            multi=true; sel=m.t; scanMandatory(); draw(); return;
+        }
+        multi=false; turn="bot"; lock=true;
+        statusEl.textContent="تفكير البوت...";
+        draw(); setTimeout(botTurn,400);
+    }
 
-let cap=null,count=0;
-for(let s=1;s<dist;s++){
- let i=id(r1+s*sr,c1+s*sc);
- if(board[i]){
-  if(board[i].c===color) return null;
-  cap=i; count++;
- }
-}
-if(count===0 && !multi) return {f,t};
-if(count===1) return {f,t,cap};
-return null;
-}
+    function doMove(m){
+        board[m.t]=board[m.f]; board[m.f]=null;
+        if(m.cap!==undefined) board[m.cap]=null;
+        let r=m.t>>3;
+        if((board[m.t].c==="player"&&r===0)||(board[m.t].c==="bot"&&r===7))
+            board[m.t].k=1;
+        sel=null;
+    }
 
-function scanMandatory(){
-mandatory=[];
-for(let i=0;i<64;i++)
- if(board[i] && board[i].c===turn)
-  for(let t=0;t<64;t++){
-   let m=valMove(i,t,turn);
-   if(m&&m.cap!==undefined) mandatory.push(m);
-  }
-}
+    function hasCap(f,c){
+        for(let t=0;t<64;t++){
+            let m=valMove(f,t,c);
+            if(m&&m.cap!==undefined) return true;
+        }
+        return false;
+    }
 
-function clickCell(i){
-if(lock||turn!=="player") return;
+    function botTurn(){
+        scanMandatory();
+        let moves = mandatory.length ? mandatory : allMoves("bot");
+        if(!moves.length){ win("ربحت!"); return; }
+        moves.sort((a,b)=>scoreMove(b)-scoreMove(a));
+        let m=moves[0];
+        doMove(m);
+        if(m.cap!==undefined && hasCap(m.t,"bot")){
+            setTimeout(botTurn,300); return;
+        }
+        turn="player"; lock=false; scanMandatory();
+        statusEl.textContent="دورك";
+        draw(); checkEnd();
+    }
 
-if(board[i] && board[i].c==="player"){
- if(multi && sel!==i) return;
- if(mandatory.length && !mandatory.some(m=>m.f===i)) return;
- sel=i; draw(); return;
-}
+    function allMoves(c){
+        let arr=[];
+        for(let i=0;i<64;i++)
+            if(board[i]&&board[i].c===c)
+                for(let t=0;t<64;t++){
+                    let m=valMove(i,t,c);
+                    if(m) arr.push(m);
+                }
+        return arr;
+    }
 
-if(sel===null) return;
-let m=valMove(sel,i,"player");
-if(mandatory.length && (!m||m.cap===undefined)) return;
-if(!m) return;
+    function scoreMove(m){
+        let s=0; if(m.cap!==undefined) s+=10;
+        let r=m.t>>3; if((turn==="bot"&&r===7)) s+=3;
+        return s+Math.random();
+    }
 
-doMove(m);
+    function checkEnd(){
+        let p=0,b=0;
+        board.forEach(x=>{if(x){x.c==="player"?p++:b++}});
+        if(!p) win("خسرت");
+        if(!b) win("ربحت");
+    }
 
-if(m.cap!==undefined && hasCap(m.t,"player")){
- multi=true; sel=m.t; scanMandatory(); draw(); return;
-}
+    function win(msg){
+        document.getElementById("overlay").style.display="flex";
+        document.getElementById("win").textContent=msg;
+        if(msg.includes("ربحت")){ps++;localStorage.ps=ps}
+        else{bs++;localStorage.bs=bs}
+        psEl.textContent=ps; bsEl.textContent=bs;
+    }
 
-multi=false; turn="bot"; lock=true;
-statusEl.textContent="تفكير البوت...";
-draw(); setTimeout(botTurn,400);
-}
+    function resetGame(){
+        document.getElementById("overlay").style.display="none";
+        init();
+    }
 
-function doMove(m){
-board[m.t]=board[m.f]; board[m.f]=null;
-if(m.cap!==undefined) board[m.cap]=null;
-let r=m.t>>3;
-if((board[m.t].c==="player"&&r===0)||(board[m.t].c==="bot"&&r===7))
- board[m.t].k=1;
-sel=null;
-}
-
-function hasCap(f,c){
-for(let t=0;t<64;t++){
- let m=valMove(f,t,c);
- if(m&&m.cap!==undefined) return true;
-}
-return false;
-}
-
-function botTurn(){
-scanMandatory();
-let moves = mandatory.length ? mandatory : allMoves("bot");
-if(!moves.length){ win("ربحت!"); return; }
-
-moves.sort((a,b)=>scoreMove(b)-scoreMove(a));
-let m=moves[0];
-
-doMove(m);
-if(m.cap!==undefined && hasCap(m.t,"bot")){
- setTimeout(botTurn,300); return;
-}
-
-turn="player"; lock=false; scanMandatory();
-statusEl.textContent="دورك";
-draw(); checkEnd();
-}
-
-function allMoves(c){
-let arr=[];
-for(let i=0;i<64;i++)
- if(board[i]&&board[i].c===c)
-  for(let t=0;t<64;t++){
-   let m=valMove(i,t,c);
-   if(m) arr.push(m);
-  }
-return arr;
-}
-
-function scoreMove(m){
-let s=0;
-if(m.cap!==undefined) s+=10;
-let r=m.t>>3;
-if((turn==="bot"&&r===7)) s+=3;
-return s+Math.random();
-}
-
-function checkEnd(){
-let p=0,b=0;
-board.forEach(x=>{if(x){x.c==="player"?p++:b++}});
-if(!p) win("خسرت");
-if(!b) win("ربحت");
-if(!allMoves(turn).length)
- win(turn==="player"?"لا حركات — خسرت":"ربحت");
-}
-
-function win(msg){
-document.getElementById("overlay").style.display="flex";
-document.getElementById("win").textContent=msg;
-if(msg.includes("ربحت")){ps++;localStorage.ps=ps}
-else{bs++;localStorage.bs=bs}
-psEl.textContent=ps; bsEl.textContent=bs;
-}
-
-function resetGame(){
-document.getElementById("overlay").style.display="none";
-init();
-}
-
-init();
-<if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js');
-}>
+    init();
+</script>
 </body>
 </html>
