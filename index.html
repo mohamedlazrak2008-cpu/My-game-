@@ -1,10 +1,7 @@
 
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
-<self.addEventListener('fetch', (event) => {
-  event.respondWith(fetch(event.request));
-});
->
+<head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dama Morocco Pro</title>
@@ -271,6 +268,8 @@ init();
 }
 
 init();
-</script>
+<if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js');
+}>
 </body>
 </html>
