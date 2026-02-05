@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -5,74 +6,85 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#3e2723">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>داما مغربية برو</title>
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <title>Dama Morocco Pro</title>
 
-    <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22Dama%20Morocco%22,%22short_name%22:%22Dama%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22#121212%22,%22theme_color%22:%22#3e2723%22}">
+    <link rel="manifest" href='data:application/manifest+json,{"name":"Dama Morocco","short_name":"Dama","start_url":".","display":"standalone","background_color":"#121212","theme_color":"#3e2723","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/3211/3211231.png","sizes":"512x512","type":"image/png"}]}'>
 
     <style>
         :root { --wood:#3e2723; --dark:#5d3a2a; --light:#e0c091; --gold:#f1c40f; }
-        *{box-sizing:border-box;user-select:none;-webkit-tap-highlight-color:transparent}
-        body{margin:0;background:#121212;color:#fff;font-family:sans-serif;
-        display:flex;flex-direction:column;height:100vh;text-align:center; overflow: hidden;}
+        * { box-sizing:border-box; user-select:none; -webkit-tap-highlight-color:transparent; touch-action: manipulation; }
+        
+        body { 
+            margin:0; background:#121212; color:#fff; font-family: system-ui, -apple-system, sans-serif;
+            display:flex; flex-direction:column; height:100vh; text-align:center; overflow: hidden;
+        }
 
-        .header{background:#1e1e1e;padding:10px;border-bottom:3px solid #333; flex-shrink: 0;}
-        .score-board{display:flex;justify-content:space-around;margin-top:5px}
-        .score-item{background:#2c2c2c;padding:6px 14px;border-radius:12px;border:1px solid #444}
-        .score-val{color:var(--gold);font-weight:bold}
+        .header { background:#1e1e1e; padding:12px; border-bottom:3px solid #333; flex-shrink: 0; }
+        .score-board { display:flex; justify-content:space-around; margin-top:8px; }
+        .score-item { background:#2c2c2c; padding:8px 16px; border-radius:12px; border:1px solid #444; min-width: 100px; }
+        .score-val { color:var(--gold); font-weight:bold; font-size: 1.2rem; }
 
-        .board-container{flex:1;display:flex;justify-content:center;align-items:center;padding:10px; touch-action: pinch-zoom;}
-        .board{
-            display:grid;grid-template-columns:repeat(8,1fr);
-            width:95vw;height:95vw;max-width:460px;max-height:460px;
-            border:10px solid var(--wood);background:var(--wood);
-            box-shadow:0 15px 50px rgba(0,0,0,.9); border-radius: 8px;
+        .board-container { flex:1; display:flex; justify-content:center; align-items:center; padding:15px; }
+        .board {
+            display:grid; grid-template-columns:repeat(8,1fr);
+            width:92vw; height:92vw; max-width:450px; max-height:450px;
+            border:10px solid var(--wood); background:var(--wood);
+            box-shadow:0 20px 60px rgba(0,0,0,.8); border-radius: 8px;
             touch-action: none;
         }
 
-        .cell{display:flex;align-items:center;justify-content:center}
-        .dark{background:var(--dark)}
-        .light{background:var(--light)}
+        .cell { display:flex; align-items:center; justify-content:center; }
+        .dark { background:var(--dark); }
+        .light { background:var(--light); }
 
-        .piece{
-            width:84%;height:84%;border-radius:50%;
-            box-shadow:inset 0 -4px 6px rgba(0,0,0,.4),0 5px 10px rgba(0,0,0,.5);
-            transition:.18s;position:relative; z-index: 2;
+        .piece {
+            width:82%; height:82%; border-radius:50%;
+            box-shadow:inset 0 -4px 6px rgba(0,0,0,.4), 0 6px 12px rgba(0,0,0,.6);
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); position:relative; z-index: 2;
         }
-        .white{background:radial-gradient(circle at 35% 35%,#fff,#ccc); border: 1px solid #999;}
-        .black{background:radial-gradient(circle at 35% 35%,#444,#000); border: 1px solid #222;}
+        .white { background:radial-gradient(circle at 35% 35%,#fff,#bbb); border: 1px solid #999; }
+        .black { background:radial-gradient(circle at 35% 35%,#444,#000); border: 1px solid #222; }
 
-        .king::after{
-            content:"👑";position:absolute;top:50%;left:50%;
-            transform:translate(-50%,-50%);font-size:1.4rem; filter: drop-shadow(0 2px 2px #000);
+        .king::after {
+            content:"👑"; position:absolute; top:50%; left:50%;
+            transform:translate(-50%,-50%); font-size: 1.5rem; filter: drop-shadow(0 2px 2px #000);
         }
 
-        .selected{transform:scale(1.15); border: 3px solid var(--gold) !important; box-shadow: 0 0 15px var(--gold);}
-        .must-capture{ animation: pulse 1s infinite; border: 2px solid #e74c3c !important; }
-        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(231, 76, 60, 0); } 100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); } }
-
-        #overlay{
-            display:none;position:fixed;inset:0;background:rgba(0,0,0,.95);
-            z-index:1000;flex-direction:column;justify-content:center;align-items:center
+        .selected { transform:scale(1.15); border: 3px solid var(--gold) !important; box-shadow: 0 0 20px var(--gold); }
+        .must-capture { animation: pulse 1s infinite; border: 2.5px solid #ff4757 !important; }
+        
+        @keyframes pulse { 
+            0% { box-shadow: 0 0 0 0 rgba(255, 71, 87, 0.7); } 
+            70% { box-shadow: 0 0 0 10px rgba(255, 71, 87, 0); } 
+            100% { box-shadow: 0 0 0 0 rgba(255, 71, 87, 0); } 
         }
-        .btn{
-            padding:15px 35px;border-radius:30px;background:#c0392b;
-            border:none;color:white;font-weight:bold;font-size:1.2rem; cursor: pointer;
+
+        #overlay {
+            display:none; position:fixed; inset:0; background:rgba(0,0,0,.92);
+            z-index:1000; flex-direction:column; justify-content:center; align-items:center;
         }
         
-        /* زر التحميل */
+        .btn {
+            padding:16px 40px; border-radius:35px; background:#c0392b;
+            border:none; color:white; font-weight:bold; font-size:1.2rem; cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3); transition: 0.2s;
+        }
+        .btn:active { transform: scale(0.95); }
+        
         #installBtn {
-            display: none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-            background: var(--gold); color: #000; padding: 10px 20px; border-radius: 20px;
-            font-weight: bold; z-index: 999; border: none; cursor: pointer;
+            display: none; position: fixed; top: 15px; left: 15px;
+            background: var(--gold); color: #000; padding: 8px 15px; border-radius: 10px;
+            font-size: 0.8rem; font-weight: bold; z-index: 1001; border: none; cursor: pointer;
         }
     </style>
 </head>
 <body>
 
-    <button id="installBtn">تثبيت اللعبة على الهاتف</button>
+    <button id="installBtn">تثبيت التطبيق 📲</button>
 
     <div class="header">
-        <div id="status">الداما المغربية — دورك</div>
+        <div id="status" style="font-size: 1.1rem; font-weight: bold;">الداما المغربية</div>
         <div class="score-board">
             <div class="score-item">أنت <span id="pScore" class="score-val">0</span></div>
             <div class="score-item">البوت <span id="bScore" class="score-val">0</span></div>
@@ -84,40 +96,42 @@
     </div>
 
     <div id="overlay">
-        <h2 id="winnerText" style="color:var(--gold); font-size: 2rem; margin-bottom: 20px;"></h2>
+        <h2 id="winnerText" style="color:var(--gold); font-size: 2.2rem; margin-bottom: 25px;"></h2>
         <button class="btn" onclick="resetGame()">لعب من جديد</button>
     </div>
 
 <script>
-    // --- منطق الـ PWA للتحميل من كروم ---
+    // --- تفعيل نظام التثبيت (PWA) ---
     let deferredPrompt;
+    const installBtn = document.getElementById('installBtn');
+
     window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
         deferredPrompt = e;
-        document.getElementById('installBtn').style.display = 'block';
+        installBtn.style.display = 'block';
     });
 
-    document.getElementById('installBtn').addEventListener('click', async () => {
+    installBtn.addEventListener('click', async () => {
         if (deferredPrompt) {
             deferredPrompt.prompt();
             const { outcome } = await deferredPrompt.userChoice;
-            if (outcome === 'accepted') {
-                document.getElementById('installBtn').style.display = 'none';
-            }
+            if (outcome === 'accepted') installBtn.style.display = 'none';
             deferredPrompt = null;
         }
     });
 
-    // --- منطق اللعبة (نفس كودك الاحترافي) ---
+    // --- محرك اللعبة المغربية الاحترافي ---
     const boardEl = document.getElementById("board");
     const statusEl = document.getElementById("status");
     const pScoreEl = document.getElementById("pScore");
     const bScoreEl = document.getElementById("bScore");
 
-    let board, turn, selected, mandatory, multiJump, lock;
+    let board, turn, selected, mandatory = [], multiJump = false, lock = false;
     let pScore = parseInt(localStorage.getItem('pScore')) || 0;
     let bScore = parseInt(localStorage.getItem('bScore')) || 0;
-    pScoreEl.textContent = pScore; bScoreEl.textContent = bScore;
+    
+    pScoreEl.textContent = pScore; 
+    bScoreEl.textContent = bScore;
 
     const dark = i => ((Math.floor(i/8)+i%8)%2===1);
     const rc = i => [Math.floor(i/8), i%8];
@@ -135,7 +149,7 @@
 
     function start(){
         initBoard(); turn="player"; selected=null; mandatory=[]; multiJump=false; lock=false;
-        findMandatory(); render();
+        findMandatory(); render(); statusEl.textContent = "دورك (الأبيض)";
     }
 
     function render(){
@@ -199,7 +213,10 @@
         if(lock || turn!=="player") return;
         if(board[i] && board[i].color==="player"){
             if(multiJump && selected!==i) return;
-            if(mandatory.length && !mandatory.some(m=>m.from===i)) return;
+            if(mandatory.length && !mandatory.some(m=>m.from===i)) {
+                statusEl.textContent = "ضروري تاكل!";
+                return;
+            }
             selected=i; render();
         } else if(selected!==null){
             let m=validate(selected,i,"player");
@@ -207,9 +224,9 @@
             if(m){
                 execMove(m);
                 if(m.cap!==undefined && hasCap(m.to,"player")){
-                    multiJump=true; selected=m.to; findMandatory(); statusEl.textContent="كمّل الأكل!"; render();
+                    multiJump=true; selected=m.to; findMandatory(); statusEl.textContent="زيد كمل الماكلة!"; render();
                 } else {
-                    multiJump=false; turn="bot"; lock=true; render(); setTimeout(botTurn,600);
+                    multiJump=false; turn="bot"; lock=true; statusEl.textContent="تفكير البوت..."; render(); setTimeout(botTurn,700);
                 }
             }
         }
@@ -235,27 +252,30 @@
             for(let i=0; i<64; i++) if(board[i] && board[i].color==="bot") 
                 for(let t=0; t<64; t++){ let m=validate(i,t,"bot"); if(m) moves.push(m); }
         }
-        if(!moves.length){ endGame("تبارك الله عليك، ربحتي!"); return; }
+        if(!moves.length){ endGame("نتا لي ربحتي، تبارك الله!"); return; }
         let m = moves[Math.floor(Math.random()*moves.length)];
         execMove(m);
         if(m.cap!==undefined && hasCap(m.to,"bot")){ setTimeout(botTurn,400); return; }
-        turn="player"; lock=false; findMandatory(); statusEl.textContent="دورك"; render();
-        if(!mandatory.length && !moves.length) checkEnd();
+        turn="player"; lock=false; findMandatory(); statusEl.textContent="دورك الآن"; render();
+        checkEnd();
     }
 
     function checkEnd(){
         let p=0, b=0; board.forEach(x=>{if(x){if(x.color==="player")p++; else b++;}});
-        if(!p) endGame("البوت ربحك!"); if(!b) endGame("نتا لي ربحتي!");
+        if(!p) endGame("البوت غلبك، حاول تاني!");
+        if(!b) endGame("تبارك الله عليك، نتا غلبتي!");
     }
 
     function endGame(msg){
         document.getElementById("winnerText").textContent=msg;
         document.getElementById("overlay").style.display="flex";
-        if(msg.includes("نتا")) { pScore++; localStorage.setItem('pScore', pScore); } else { bScore++; localStorage.setItem('bScore', bScore); }
+        if(msg.includes("نتا")) { pScore++; localStorage.setItem('pScore', pScore); } 
+        else { bScore++; localStorage.setItem('bScore', bScore); }
         pScoreEl.textContent=pScore; bScoreEl.textContent=bScore;
     }
 
     function resetGame(){ document.getElementById("overlay").style.display="none"; start(); }
+    
     start();
 </script>
 </body>
