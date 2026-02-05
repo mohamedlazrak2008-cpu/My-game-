@@ -3,164 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>داما مغربية - النسخة الاحترافية</title>
+    <title>داما كلاسيك - البطولة</title>
     <style>
         :root { 
             --board-dark: #5d3a2a; 
             --board-light: #e0c091; 
-            --player: #b22222; 
-            --bot: #222; 
+            --player: #ffffff; /* البيدق أصبح أبيض */
+            --bot: #1a1a1a; 
         }
         body { 
-            background: #121212; color: white; text-align: center; 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            margin: 0; touch-action: manipulation; 
+            background: #1a1a1a; color: white; text-align: center; 
+            font-family: 'Arial', sans-serif; margin: 0; touch-action: manipulation; 
         }
-        .status { background: #222; padding: 15px; font-weight: bold; border-bottom: 3px solid #444; color: #f1c40f; font-size: 1.1rem; }
-        .board-container { display: flex; justify-content: center; padding: 10px; }
+        .status { background: #2c3e50; padding: 15px; font-weight: bold; border-bottom: 4px solid #34495e; color: #ecf0f1; font-size: 1.2rem; }
+        .board-container { display: flex; justify-content: center; padding: 20px 10px; position: relative; }
         .board { 
             display: grid; grid-template-columns: repeat(8, 1fr); 
             width: 95vw; height: 95vw; max-width: 450px; max-height: 450px; 
-            border: 12px solid #3e2723; box-shadow: 0 15px 35px rgba(0,0,0,0.8);
+            border: 15px solid #3e2723; box-shadow: 0 20px 50px rgba(0,0,0,0.9);
         }
         .cell { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; position: relative; }
         .dark { background: var(--board-dark); }
         .light { background: var(--board-light); }
         .piece { 
-            width: 82%; height: 82%; border-radius: 50%; 
-            border: 2px solid rgba(255,255,255,0.2); 
-            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
-            position: relative; box-shadow: 0 4px 0 #000;
+            width: 85%; height: 85%; border-radius: 50%; 
+            transition: all 0.3s ease; position: relative;
+            box-shadow: 0 6px 0 #000;
         }
-        .red { background: var(--player); background: radial-gradient(circle at 30% 30%, #ff4b2b, #b22222); }
-        .black-piece { background: var(--bot); background: radial-gradient(circle at 30% 30%, #444, #000); }
-        .king::after { content: '👑'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 1.3rem; text-shadow: 0 2px 2px #000; }
-        .selected { transform: scale(1.1); box-shadow: 0 0 20px #f1c40f; border: 3px solid #f1c40f !important; z-index: 10; }
+        /* شكل البيدق الأبيض */
+        .white-piece { 
+            background: radial-gradient(circle at 30% 30%, #ffffff, #dcdde1); 
+            border: 1px solid #ccc;
+        }
+        /* شكل البيدق الأسود */
+        .black-piece { 
+            background: radial-gradient(circle at 30% 30%, #444, #000); 
+            border: 1px solid #333;
+        }
+        .king::after { content: '👑'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 1.4rem; filter: drop-shadow(0 2px 2px #000); }
+        .selected { transform: scale(1.1) translateY(-5px); box-shadow: 0 10px 20px #f1c40f !important; border: 3px solid #f1c40f !important; z-index: 10; }
+        
+        /* نافذة الفوز */
+        #overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); z-index: 100; justify-content: center; align-items: center; flex-direction: column;
+        }
+        #overlay h2 { font-size: 3rem; color: #f1c40f; margin-bottom: 20px; }
+        
         button { 
-            padding: 12px 30px; border-radius: 30px; background: #5d3a2a; 
-            color: white; border: 2px solid #e0c091; font-size: 1rem; 
-            margin-top: 20px; cursor: pointer; font-weight: bold;
+            padding: 15px 40px; border-radius: 50px; background: #c0392b; 
+            color: white; border: none; font-size: 1.2rem; cursor: pointer; font-weight: bold; transition: 0.3s;
         }
-    </style>
-</head>
-<body>
-    <div class="status" id="status">داما مغربية - دورك الآن</div>
-    <div class="board-container">
-        <div class="board" id="board"></div>
-    </div>
-    <button onclick="location.reload()">إعادة اللعبة</button>
-
-    <script>
-        const boardEl = document.getElementById('board');
-        const statusEl = document.getElementById('status');
-        let board = Array(64).fill(null);
-        let turn = 'player';
-        let selected = null;
-
-        function init() {
-            for (let i = 0; i < 64; i++) {
-                let r = Math.floor(i/8), c = i%8;
-                if ((r+c)%2 !== 0) {
-                    if (r < 3) board[i] = { color: 'bot', king: false };
-                    else if (r > 4) board[i] = { color: 'player', king: false };
-                }
-            }
-            render();
-        }
-
-        function render() {
-            boardEl.innerHTML = '';
-            board.forEach((p, i) => {
-                const cell = document.createElement('div');
-                cell.className = `cell ${(Math.floor(i/8)+i%8)%2!==0 ? 'dark':'light'}`;
-                if (p) {
-                    const div = document.createElement('div');
-                    div.className = `piece ${p.color==='player'?'red':'black-piece'} ${p.king?'king':''}`;
-                    if (selected === i) div.classList.add('selected');
-                    cell.appendChild(div);
-                }
-                cell.onclick = () => handleClick(i);
-                boardEl.appendChild(cell);
-            });
-        }
-
-        function handleClick(i) {
-            if (turn !== 'player') return;
-            if (board[i] && board[i].color === 'player') {
-                selected = i;
-            } else if (selected !== null) {
-                let move = validateMove(selected, i, 'player');
-                if (move) {
-                    executeMove(move);
-                    turn = 'bot';
-                    statusEl.innerText = "البوت يفكر...";
-                    setTimeout(botMove, 800);
-                }
-            }
-            render();
-        }
-
-        function validateMove(from, to, color) {
-            if (board[to]) return null;
-            let p = board[from];
-            let r1 = Math.floor(from/8), c1 = from%8;
-            let r2 = Math.floor(to/8), c2 = to%8;
-            let dr = r2 - r1, dc = c2 - c1;
-
-            if (!p.king) {
-                // البيدق العادي: حركة للأمام فقط
-                if (Math.abs(dc) === 1 && dr === (color === 'player' ? -1 : 1)) return { f: from, t: to };
-                // الأكل: للأمام فقط (مربعين)
-                if (Math.abs(dc) === 2 && dr === (color === 'player' ? -2 : 2)) {
-                    let mid = (from + to) / 2;
-                    if (board[mid] && board[mid].color !== color) return { f: from, t: to, m: mid };
-                }
-            } else {
-                // الملك: حركة في كل الاتجاهات ولأي مسافة
-                if (Math.abs(dr) === Math.abs(dc)) {
-                    let stepR = dr / Math.abs(dr), stepC = dc / Math.abs(dc);
-                    let mid = null, count = 0;
-                    for (let step = 1; step < Math.abs(dr); step++) {
-                        let idx = (r1 + step * stepR) * 8 + (c1 + step * stepC);
-                        if (board[idx]) {
-                            if (board[idx].color !== color) { count++; mid = idx; }
-                            else return null;
-                        }
-                    }
-                    if (count === 0) return { f: from, t: to };
-                    if (count === 1) return { f: from, t: to, m: mid };
-                }
-            }
-            return null;
-        }
-
-        function executeMove(m) {
-            board[m.t] = board[m.f];
-            board[m.f] = null;
-            if (m.m) board[m.m] = null;
-            if (Math.floor(m.t/8) === 0 && board[m.t].color === 'player') board[m.t].king = true;
-            if (Math.floor(m.t/8) === 7 && board[m.t].color === 'bot') board[m.t].king = true;
-            selected = null;
-        }
-
-        function botMove() {
-            let moves = [];
-            board.forEach((p, i) => {
-                if (p && p.color === 'bot') {
-                    for (let t = 0; t < 64; t++) {
-                        let m = validateMove(i, t, 'bot');
-                        if (m) moves.push(m);
-                    }
-                }
-            });
-            if (moves.length) {
-                let jumps = moves.filter(m => m.m);
-                let final = jumps.length ? jumps[Math.floor(Math.random()*jumps.length)] : moves[Math.floor(Math.random()*moves.length)];
-                executeMove(final);
-            }
-            turn = 'player'; statusEl.innerText = "دورك الآن"; render();
-        }
-        init();
-    </script>
-</body>
-</html>
+        button:hover { background: #e74c3c;
