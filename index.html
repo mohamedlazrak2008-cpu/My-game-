@@ -2,281 +2,272 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#3e2723">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Dama Morocco Pro</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dama Morocco Pro</title>
 
-    <link rel="manifest" href='data:application/manifest+json,{"name":"Dama Morocco","short_name":"Dama","start_url":".","display":"standalone","background_color":"#121212","theme_color":"#3e2723","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/3211/3211231.png","sizes":"512x512","type":"image/png"}]}'>
+<meta name="theme-color" content="#3e2723">
 
-    <style>
-        :root { --wood:#3e2723; --dark:#5d3a2a; --light:#e0c091; --gold:#f1c40f; }
-        * { box-sizing:border-box; user-select:none; -webkit-tap-highlight-color:transparent; touch-action: manipulation; }
-        
-        body { 
-            margin:0; background:#121212; color:#fff; font-family: system-ui, -apple-system, sans-serif;
-            display:flex; flex-direction:column; height:100vh; text-align:center; overflow: hidden;
-        }
+<link rel="manifest" href="manifest.json">
 
-        .header { background:#1e1e1e; padding:12px; border-bottom:3px solid #333; flex-shrink: 0; }
-        .score-board { display:flex; justify-content:space-around; margin-top:8px; }
-        .score-item { background:#2c2c2c; padding:8px 16px; border-radius:12px; border:1px solid #444; min-width: 100px; }
-        .score-val { color:var(--gold); font-weight:bold; font-size: 1.2rem; }
+<style>
+:root{--wood:#3e2723;--dark:#5d3a2a;--light:#e0c091;--gold:#f1c40f}
+*{box-sizing:border-box;user-select:none}
+body{margin:0;background:#121212;color:#fff;font-family:system-ui;
+display:flex;flex-direction:column;height:100vh;text-align:center}
 
-        .board-container { flex:1; display:flex; justify-content:center; align-items:center; padding:15px; }
-        .board {
-            display:grid; grid-template-columns:repeat(8,1fr);
-            width:92vw; height:92vw; max-width:450px; max-height:450px;
-            border:10px solid var(--wood); background:var(--wood);
-            box-shadow:0 20px 60px rgba(0,0,0,.8); border-radius: 8px;
-            touch-action: none;
-        }
+.header{background:#1e1e1e;padding:10px;border-bottom:3px solid #333}
+.score-board{display:flex;justify-content:space-around;margin-top:6px}
+.score-item{background:#2c2c2c;padding:6px 14px;border-radius:12px;border:1px solid #444}
+.score-val{color:var(--gold);font-weight:bold}
 
-        .cell { display:flex; align-items:center; justify-content:center; }
-        .dark { background:var(--dark); }
-        .light { background:var(--light); }
+.board-wrap{flex:1;display:flex;justify-content:center;align-items:center}
+.board{
+display:grid;grid-template-columns:repeat(8,1fr);
+width:92vw;height:92vw;max-width:460px;max-height:460px;
+border:10px solid var(--wood);background:var(--wood);
+box-shadow:0 20px 60px rgba(0,0,0,.8)
+}
 
-        .piece {
-            width:82%; height:82%; border-radius:50%;
-            box-shadow:inset 0 -4px 6px rgba(0,0,0,.4), 0 6px 12px rgba(0,0,0,.6);
-            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); position:relative; z-index: 2;
-        }
-        .white { background:radial-gradient(circle at 35% 35%,#fff,#bbb); border: 1px solid #999; }
-        .black { background:radial-gradient(circle at 35% 35%,#444,#000); border: 1px solid #222; }
+.cell{display:flex;align-items:center;justify-content:center}
+.dark{background:var(--dark)}
+.light{background:var(--light)}
 
-        .king::after {
-            content:"👑"; position:absolute; top:50%; left:50%;
-            transform:translate(-50%,-50%); font-size: 1.5rem; filter: drop-shadow(0 2px 2px #000);
-        }
+.piece{
+width:82%;height:82%;border-radius:50%;
+transition:.18s;position:relative
+}
+.white{background:radial-gradient(circle,#fff,#bbb)}
+.black{background:radial-gradient(circle,#444,#000)}
 
-        .selected { transform:scale(1.15); border: 3px solid var(--gold) !important; box-shadow: 0 0 20px var(--gold); }
-        .must-capture { animation: pulse 1s infinite; border: 2.5px solid #ff4757 !important; }
-        
-        @keyframes pulse { 
-            0% { box-shadow: 0 0 0 0 rgba(255, 71, 87, 0.7); } 
-            70% { box-shadow: 0 0 0 10px rgba(255, 71, 87, 0); } 
-            100% { box-shadow: 0 0 0 0 rgba(255, 71, 87, 0); } 
-        }
+.king::after{content:"👑";position:absolute;top:50%;left:50%;
+transform:translate(-50%,-50%)}
 
-        #overlay {
-            display:none; position:fixed; inset:0; background:rgba(0,0,0,.92);
-            z-index:1000; flex-direction:column; justify-content:center; align-items:center;
-        }
-        
-        .btn {
-            padding:16px 40px; border-radius:35px; background:#c0392b;
-            border:none; color:white; font-weight:bold; font-size:1.2rem; cursor: pointer;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3); transition: 0.2s;
-        }
-        .btn:active { transform: scale(0.95); }
-        
-        #installBtn {
-            display: none; position: fixed; top: 15px; left: 15px;
-            background: var(--gold); color: #000; padding: 8px 15px; border-radius: 10px;
-            font-size: 0.8rem; font-weight: bold; z-index: 1001; border: none; cursor: pointer;
-        }
-    </style>
+.sel{outline:3px solid var(--gold);transform:scale(1.12)}
+.must{outline:3px solid #ff4757}
+
+#overlay{
+display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);
+flex-direction:column;justify-content:center;align-items:center
+}
+
+.btn{padding:14px 30px;border-radius:30px;background:#c0392b;
+color:white;border:none;font-weight:bold;font-size:1.1rem}
+</style>
 </head>
+
 <body>
 
-    <button id="installBtn">تثبيت التطبيق 📲</button>
+<div class="header">
+<div id="status">الداما المغربية — دورك</div>
+<div class="score-board">
+<div class="score-item">أنت <span id="ps" class="score-val">0</span></div>
+<div class="score-item">البوت <span id="bs" class="score-val">0</span></div>
+</div>
+</div>
 
-    <div class="header">
-        <div id="status" style="font-size: 1.1rem; font-weight: bold;">الداما المغربية</div>
-        <div class="score-board">
-            <div class="score-item">أنت <span id="pScore" class="score-val">0</span></div>
-            <div class="score-item">البوت <span id="bScore" class="score-val">0</span></div>
-        </div>
-    </div>
+<div class="board-wrap"><div id="board" class="board"></div></div>
 
-    <div class="board-container">
-        <div id="board" class="board"></div>
-    </div>
-
-    <div id="overlay">
-        <h2 id="winnerText" style="color:var(--gold); font-size: 2.2rem; margin-bottom: 25px;"></h2>
-        <button class="btn" onclick="resetGame()">لعب من جديد</button>
-    </div>
+<div id="overlay">
+<h2 id="win"></h2>
+<button class="btn" onclick="resetGame()">لعب من جديد</button>
+</div>
 
 <script>
-    // --- تفعيل نظام التثبيت (PWA) ---
-    let deferredPrompt;
-    const installBtn = document.getElementById('installBtn');
+if('serviceWorker' in navigator){
+ navigator.serviceWorker.register('sw.js');
+}
 
-    window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault();
-        deferredPrompt = e;
-        installBtn.style.display = 'block';
-    });
+const B=document.getElementById("board");
+const statusEl=document.getElementById("status");
+const psEl=document.getElementById("ps");
+const bsEl=document.getElementById("bs");
 
-    installBtn.addEventListener('click', async () => {
-        if (deferredPrompt) {
-            deferredPrompt.prompt();
-            const { outcome } = await deferredPrompt.userChoice;
-            if (outcome === 'accepted') installBtn.style.display = 'none';
-            deferredPrompt = null;
-        }
-    });
+let board,turn,sel,mandatory=[],multi=false,lock=false;
 
-    // --- محرك اللعبة المغربية الاحترافي ---
-    const boardEl = document.getElementById("board");
-    const statusEl = document.getElementById("status");
-    const pScoreEl = document.getElementById("pScore");
-    const bScoreEl = document.getElementById("bScore");
+let ps=+localStorage.ps||0;
+let bs=+localStorage.bs||0;
+psEl.textContent=ps; bsEl.textContent=bs;
 
-    let board, turn, selected, mandatory = [], multiJump = false, lock = false;
-    let pScore = parseInt(localStorage.getItem('pScore')) || 0;
-    let bScore = parseInt(localStorage.getItem('bScore')) || 0;
-    
-    pScoreEl.textContent = pScore; 
-    bScoreEl.textContent = bScore;
+const dark=i=>((i>>3)+i)%2===1;
+const rc=i=>[i>>3,i%8];
+const id=(r,c)=>r*8+c;
 
-    const dark = i => ((Math.floor(i/8)+i%8)%2===1);
-    const rc = i => [Math.floor(i/8), i%8];
-    const idx = (r,c)=> r*8+c;
+function init(){
+board=Array(64).fill(null);
+for(let i=0;i<64;i++){
+ if(!dark(i)) continue;
+ let r=i>>3;
+ if(r<3) board[i]={c:"bot",k:0};
+ if(r>4) board[i]={c:"player",k:0};
+}
+turn="player"; sel=null; multi=false; lock=false;
+scanMandatory(); draw();
+}
 
-    function initBoard(){
-        board = Array(64).fill(null);
-        for(let i=0;i<64;i++){
-            if(!dark(i)) continue;
-            let r=Math.floor(i/8);
-            if(r<3) board[i]={color:"bot", king:false};
-            if(r>4) board[i]={color:"player", king:false};
-        }
-    }
+function draw(){
+B.innerHTML="";
+for(let i=0;i<64;i++){
+ let d=document.createElement("div");
+ d.className="cell "+(dark(i)?"dark":"light");
+ if(board[i]){
+  let p=document.createElement("div");
+  p.className="piece "+(board[i].c==="player"?"white":"black");
+  if(board[i].k) p.classList.add("king");
+  if(sel===i) p.classList.add("sel");
+  if(turn==="player" && mandatory.some(m=>m.f===i)) p.classList.add("must");
+  d.appendChild(p);
+ }
+ d.onclick=()=>clickCell(i);
+ B.appendChild(d);
+}
+}
 
-    function start(){
-        initBoard(); turn="player"; selected=null; mandatory=[]; multiJump=false; lock=false;
-        findMandatory(); render(); statusEl.textContent = "دورك (الأبيض)";
-    }
+function valMove(f,t,color){
+if(!dark(t)||board[t]) return null;
+let p=board[f]; if(!p||p.c!==color) return null;
 
-    function render(){
-        boardEl.innerHTML="";
-        for(let i=0;i<64;i++){
-            let cell=document.createElement("div");
-            cell.className="cell "+(dark(i)?"dark":"light");
-            if(board[i]){
-                let p=document.createElement("div");
-                p.className="piece "+(board[i].color==="player"?"white":"black");
-                if(board[i].king) p.classList.add("king");
-                if(selected===i) p.classList.add("selected");
-                if(turn==="player" && mandatory.some(m=>m.from===i)) p.classList.add("must-capture");
-                cell.appendChild(p);
-            }
-            cell.onclick=()=>onClick(i);
-            boardEl.appendChild(cell);
-        }
-    }
+let [r1,c1]=rc(f),[r2,c2]=rc(t);
+let dr=r2-r1, dc=c2-c1;
+if(Math.abs(dr)!==Math.abs(dc)) return null;
 
-    function validate(from,to,color){
-        if(to<0 || to>63 || board[to] || !dark(to)) return null;
-        let p=board[from];
-        if(!p || p.color!==color) return null;
-        let [r1,c1]=rc(from), [r2,c2]=rc(to);
-        let dr=r2-r1, dc=Math.abs(c2-c1);
-        if(Math.abs(dr)!==dc) return null;
-        let sR=Math.sign(dr), sC=Math.sign(c2-c1), dist=Math.abs(dr);
+let sr=Math.sign(dr), sc=Math.sign(dc), dist=Math.abs(dr);
 
-        if(!p.king){
-            if(dist===1 && !multiJump && (color==="player"?dr===-1:dr===1)) return {from,to};
-            if(dist===2){
-                let m=idx(r1+sR,c1+sC);
-                if(board[m] && board[m].color!==color) return {from,to,cap:m};
-            }
-        } else {
-            let cap=null, cnt=0;
-            for(let s=1; s<dist; s++){
-                let i=idx(r1+s*sR,c1+s*sC);
-                if(board[i]){ if(board[i].color===color) return null; cap=i; cnt++; }
-            }
-            if(cnt===0 && !multiJump) return {from,to};
-            if(cnt===1) return {from,to,cap};
-        }
-        return null;
-    }
+if(!p.k){
+ if(dist===1 && !multi && (color==="player"?sr===-1:sr===1))
+  return {f,t};
+ if(dist===2){
+  let m=id(r1+sr,c1+sc);
+  if(board[m] && board[m].c!==color) return {f,t,cap:m};
+ }
+ return null;
+}
 
-    function findMandatory(){
-        mandatory = [];
-        for(let i=0; i<64; i++){
-            if(board[i] && board[i].color===turn){
-                for(let t=0; t<64; t++){
-                    let m=validate(i,t,turn);
-                    if(m && m.cap!==undefined) mandatory.push(m);
-                }
-            }
-        }
-    }
+let cap=null,count=0;
+for(let s=1;s<dist;s++){
+ let i=id(r1+s*sr,c1+s*sc);
+ if(board[i]){
+  if(board[i].c===color) return null;
+  cap=i; count++;
+ }
+}
+if(count===0 && !multi) return {f,t};
+if(count===1) return {f,t,cap};
+return null;
+}
 
-    function onClick(i){
-        if(lock || turn!=="player") return;
-        if(board[i] && board[i].color==="player"){
-            if(multiJump && selected!==i) return;
-            if(mandatory.length && !mandatory.some(m=>m.from===i)) {
-                statusEl.textContent = "ضروري تاكل!";
-                return;
-            }
-            selected=i; render();
-        } else if(selected!==null){
-            let m=validate(selected,i,"player");
-            if(mandatory.length && (!m || m.cap===undefined)) return;
-            if(m){
-                execMove(m);
-                if(m.cap!==undefined && hasCap(m.to,"player")){
-                    multiJump=true; selected=m.to; findMandatory(); statusEl.textContent="زيد كمل الماكلة!"; render();
-                } else {
-                    multiJump=false; turn="bot"; lock=true; statusEl.textContent="تفكير البوت..."; render(); setTimeout(botTurn,700);
-                }
-            }
-        }
-    }
+function scanMandatory(){
+mandatory=[];
+for(let i=0;i<64;i++)
+ if(board[i] && board[i].c===turn)
+  for(let t=0;t<64;t++){
+   let m=valMove(i,t,turn);
+   if(m&&m.cap!==undefined) mandatory.push(m);
+  }
+}
 
-    function execMove(m){
-        board[m.to]=board[m.from]; board[m.from]=null;
-        if(m.cap!==undefined) board[m.cap]=null;
-        let [r2]=rc(m.to);
-        if((board[m.to].color==="player" && r2===0) || (board[m.to].color==="bot" && r2===7)) board[m.to].king=true;
-        selected=null;
-    }
+function clickCell(i){
+if(lock||turn!=="player") return;
 
-    function hasCap(f,c){
-        for(let t=0; t<64; t++){ let m=validate(f,t,c); if(m && m.cap!==undefined) return true; }
-        return false;
-    }
+if(board[i] && board[i].c==="player"){
+ if(multi && sel!==i) return;
+ if(mandatory.length && !mandatory.some(m=>m.f===i)) return;
+ sel=i; draw(); return;
+}
 
-    function botTurn(){
-        findMandatory();
-        let moves = mandatory.length ? mandatory : [];
-        if(!moves.length){
-            for(let i=0; i<64; i++) if(board[i] && board[i].color==="bot") 
-                for(let t=0; t<64; t++){ let m=validate(i,t,"bot"); if(m) moves.push(m); }
-        }
-        if(!moves.length){ endGame("نتا لي ربحتي، تبارك الله!"); return; }
-        let m = moves[Math.floor(Math.random()*moves.length)];
-        execMove(m);
-        if(m.cap!==undefined && hasCap(m.to,"bot")){ setTimeout(botTurn,400); return; }
-        turn="player"; lock=false; findMandatory(); statusEl.textContent="دورك الآن"; render();
-        checkEnd();
-    }
+if(sel===null) return;
+let m=valMove(sel,i,"player");
+if(mandatory.length && (!m||m.cap===undefined)) return;
+if(!m) return;
 
-    function checkEnd(){
-        let p=0, b=0; board.forEach(x=>{if(x){if(x.color==="player")p++; else b++;}});
-        if(!p) endGame("البوت غلبك، حاول تاني!");
-        if(!b) endGame("تبارك الله عليك، نتا غلبتي!");
-    }
+doMove(m);
 
-    function endGame(msg){
-        document.getElementById("winnerText").textContent=msg;
-        document.getElementById("overlay").style.display="flex";
-        if(msg.includes("نتا")) { pScore++; localStorage.setItem('pScore', pScore); } 
-        else { bScore++; localStorage.setItem('bScore', bScore); }
-        pScoreEl.textContent=pScore; bScoreEl.textContent=bScore;
-    }
+if(m.cap!==undefined && hasCap(m.t,"player")){
+ multi=true; sel=m.t; scanMandatory(); draw(); return;
+}
 
-    function resetGame(){ document.getElementById("overlay").style.display="none"; start(); }
-    
-    start();
+multi=false; turn="bot"; lock=true;
+statusEl.textContent="تفكير البوت...";
+draw(); setTimeout(botTurn,400);
+}
+
+function doMove(m){
+board[m.t]=board[m.f]; board[m.f]=null;
+if(m.cap!==undefined) board[m.cap]=null;
+let r=m.t>>3;
+if((board[m.t].c==="player"&&r===0)||(board[m.t].c==="bot"&&r===7))
+ board[m.t].k=1;
+sel=null;
+}
+
+function hasCap(f,c){
+for(let t=0;t<64;t++){
+ let m=valMove(f,t,c);
+ if(m&&m.cap!==undefined) return true;
+}
+return false;
+}
+
+function botTurn(){
+scanMandatory();
+let moves = mandatory.length ? mandatory : allMoves("bot");
+if(!moves.length){ win("ربحت!"); return; }
+
+moves.sort((a,b)=>scoreMove(b)-scoreMove(a));
+let m=moves[0];
+
+doMove(m);
+if(m.cap!==undefined && hasCap(m.t,"bot")){
+ setTimeout(botTurn,300); return;
+}
+
+turn="player"; lock=false; scanMandatory();
+statusEl.textContent="دورك";
+draw(); checkEnd();
+}
+
+function allMoves(c){
+let arr=[];
+for(let i=0;i<64;i++)
+ if(board[i]&&board[i].c===c)
+  for(let t=0;t<64;t++){
+   let m=valMove(i,t,c);
+   if(m) arr.push(m);
+  }
+return arr;
+}
+
+function scoreMove(m){
+let s=0;
+if(m.cap!==undefined) s+=10;
+let r=m.t>>3;
+if((turn==="bot"&&r===7)) s+=3;
+return s+Math.random();
+}
+
+function checkEnd(){
+let p=0,b=0;
+board.forEach(x=>{if(x){x.c==="player"?p++:b++}});
+if(!p) win("خسرت");
+if(!b) win("ربحت");
+if(!allMoves(turn).length)
+ win(turn==="player"?"لا حركات — خسرت":"ربحت");
+}
+
+function win(msg){
+document.getElementById("overlay").style.display="flex";
+document.getElementById("win").textContent=msg;
+if(msg.includes("ربحت")){ps++;localStorage.ps=ps}
+else{bs++;localStorage.bs=bs}
+psEl.textContent=ps; bsEl.textContent=bs;
+}
+
+function resetGame(){
+document.getElementById("overlay").style.display="none";
+init();
+}
+
+init();
 </script>
 </body>
 </html>
