@@ -232,6 +232,13 @@
     }
 
     init();
-</script>
+    <if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js')
+    .then(() => console.log("اللعبة جاهزة للعمل بدون نت!"))
+    .catch((err) => console.log("خطأ في التثبيت:", err));
+}
+
+    
+    >
 </body>
 </html>
