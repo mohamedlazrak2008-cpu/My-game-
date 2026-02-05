@@ -3,40 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>داما مغربية - النسخة الأصلية</title>
+    <title>داما مغربية - حرية الاختيار</title>
     <style>
         :root { --board-dark: #7b4a35; --board-light: #f0d9b5; --player: #e74c3c; --bot: #2c3e50; }
         body { background: #1a1a1a; color: white; text-align: center; font-family: sans-serif; margin: 0; touch-action: manipulation; }
-        .status { background: #333; padding: 15px; font-weight: bold; border-bottom: 2px solid #555; }
-        .board { display: grid; grid-template-columns: repeat(8, 1fr); width: 95vw; height: 95vw; max-width: 450px; max-height: 450px; margin: 20px auto; border: 10px solid #5d3a2a; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .status { background: #333; padding: 15px; font-weight: bold; border-bottom: 2px solid #555; color: #2ecc71; }
+        .board { display: grid; grid-template-columns: repeat(8, 1fr); width: 95vw; height: 95vw; max-width: 450px; max-height: 450px; margin: 20px auto; border: 10px solid #5d3a2a; }
         .cell { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; }
         .dark { background: var(--board-dark); }
         .light { background: var(--board-light); }
-        .piece { width: 80%; height: 80%; border-radius: 50%; box-shadow: inset 0 -5px 5px rgba(0,0,0,0.3), 0 5px 10px rgba(0,0,0,0.4); cursor: pointer; transition: 0.2s; }
-        .red { background: var(--player); border: 2px solid #c0392b; }
-        .black-piece { background: var(--bot); border: 2px solid #000; }
-        .selected { transform: scale(1.15); border: 4px solid #f1c40f !important; box-shadow: 0 0 20px #f1c40f; }
-        button { padding: 12px 25px; border-radius: 5px; background: #27ae60; color: white; border: none; font-size: 1rem; cursor: pointer; }
+        .piece { width: 80%; height: 80%; border-radius: 50%; border: 2px solid #fff; transition: 0.2s; position: relative; }
+        .red { background: var(--player); }
+        .black-piece { background: var(--bot); }
+        .king::after { content: '👑'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 1.2rem; }
+        .selected { transform: scale(1.1); box-shadow: 0 0 15px yellow; }
+        button { padding: 12px 25px; border-radius: 5px; background: #e67e22; color: white; border: none; margin-top: 10px; }
     </style>
 </head>
 <body>
-    <div class="status" id="status">دورك الآن (الأحمر)</div>
+    <div class="status" id="status">العب بحرية - الأكل ليس إجبارياً</div>
     <div class="board" id="board"></div>
-    <button onclick="location.reload()">إعادة بدء اللعبة</button>
+    <button onclick="location.reload()">إعادة اللعبة</button>
 
     <script>
         const boardEl = document.getElementById('board');
         const statusEl = document.getElementById('status');
-        let selectedIndex = null;
+        let board = Array(64).fill(null);
         let turn = 'player';
-        let gameState = Array(64).fill(null);
+        let selected = null;
 
         function init() {
             for (let i = 0; i < 64; i++) {
-                const row = Math.floor(i / 8), col = i % 8;
-                if ((row + col) % 2 !== 0) {
-                    if (row < 3) gameState[i] = 'bot';
-                    else if (row > 4) gameState[i] = 'player';
+                let r = Math.floor(i/8), c = i%8;
+                if ((r+c)%2 !== 0) {
+                    if (r < 3) board[i] = { color: 'bot', king: false };
+                    else if (r > 4) board[i] = { color: 'player', king: false };
                 }
             }
             render();
@@ -44,15 +45,14 @@
 
         function render() {
             boardEl.innerHTML = '';
-            gameState.forEach((type, i) => {
-                const row = Math.floor(i / 8), col = i % 8;
+            board.forEach((p, i) => {
                 const cell = document.createElement('div');
-                cell.className = `cell ${(row + col) % 2 !== 0 ? 'dark' : 'light'}`;
-                if (type) {
-                    const p = document.createElement('div');
-                    p.className = `piece ${type === 'player' ? 'red' : 'black-piece'}`;
-                    if (selectedIndex === i) p.classList.add('selected');
-                    cell.appendChild(p);
+                cell.className = `cell ${(Math.floor(i/8)+i%8)%2!==0 ? 'dark':'light'}`;
+                if (p) {
+                    const div = document.createElement('div');
+                    div.className = `piece ${p.color==='player'?'red':'black-piece'} ${p.king?'king':''}`;
+                    if (selected === i) div.classList.add('selected');
+                    cell.appendChild(div);
                 }
                 cell.onclick = () => handleClick(i);
                 boardEl.appendChild(cell);
@@ -61,39 +61,76 @@
 
         function handleClick(i) {
             if (turn !== 'player') return;
-            if (gameState[i] === 'player') {
-                selectedIndex = i;
-            } else if (selectedIndex !== null && gameState[i] === null && (Math.floor(i/8) + i%8)%2 !== 0) {
-                const diff = selectedIndex - i;
-                if (diff === 7 || diff === 9) { // حركة بسيطة للأمام
-                    gameState[i] = 'player';
-                    gameState[selectedIndex] = null;
-                    selectedIndex = null;
+            if (board[i] && board[i].color === 'player') {
+                selected = i;
+            } else if (selected !== null) {
+                let move = findValidMove(selected, i, 'player');
+                if (move) {
+                    executeMove(move);
                     turn = 'bot';
-                    statusEl.innerText = "البوت يفكر...";
-                    setTimeout(botPlay, 1000);
+                    statusEl.innerText = "دور البوت...";
+                    setTimeout(botMove, 700);
                 }
             }
             render();
         }
 
-        function botPlay() {
-            let moves = [];
-            gameState.forEach((p, i) => {
-                if (p === 'bot') {
-                    [i+7, i+9].forEach(t => {
-                        if (t < 64 && gameState[t] === null && (Math.floor(t/8) + t%8)%2 !== 0) moves.push({f:i, t:t});
+        function findValidMove(from, to, color) {
+            if (board[to]) return null;
+            let r1 = Math.floor(from/8), c1 = from%8;
+            let r2 = Math.floor(to/8), c2 = to%8;
+            let dr = r2 - r1, dc = Math.abs(c2 - c1);
+
+            // حركة عادية (مربع واحد)
+            if (dc === 1) {
+                if (board[from].king || (color === 'player' && dr === -1) || (color === 'bot' && dr === 1)) {
+                    return { f: from, t: to };
+                }
+            }
+            // قفزة أكل (مربعين)
+            if (dc === 2 && Math.abs(dr) === 2) {
+                let mid = (from + to) / 2;
+                if (board[mid] && board[mid].color !== color) {
+                    return { f: from, t: to, m: mid };
+                }
+            }
+            return null;
+        }
+
+        function executeMove(m) {
+            board[m.t] = board[m.f];
+            board[m.f] = null;
+            if (m.m) board[m.m] = null;
+            if (Math.floor(m.t/8) === 0 && board[m.t].color === 'player') board[m.t].king = true;
+            if (Math.floor(m.t/8) === 7 && board[m.t].color === 'bot') board[m.t].king = true;
+            selected = null;
+        }
+
+        function botMove() {
+            let allMoves = [];
+            board.forEach((p, i) => {
+                if (p && p.color === 'bot') {
+                    let targets = [i+7, i+9, i+14, i+18, i-7, i-9, i-14, i-18];
+                    targets.forEach(t => {
+                        if (t>=0 && t<64) {
+                            let m = findValidMove(i, t, 'bot');
+                            if (m) allMoves.push(m);
+                        }
                     });
                 }
             });
-            if (moves.length) {
-                const m = moves[Math.floor(Math.random()*moves.length)];
-                gameState[m.t] = 'bot'; gameState[m.f] = null;
+            
+            if (allMoves.length) {
+                // البوت يفضل الأكل إذا وجده، لكنه غير مجبر برمجياً إذا لم يجد هدفاً
+                let jumps = allMoves.filter(m => m.m);
+                let finalMove = jumps.length ? jumps[Math.floor(Math.random()*jumps.length)] : allMoves[Math.floor(Math.random()*allMoves.length)];
+                executeMove(finalMove);
             }
             turn = 'player';
-            statusEl.innerText = "دورك الآن (الأحمر)";
+            statusEl.innerText = "دورك الآن";
             render();
         }
+
         init();
     </script>
 </body>
