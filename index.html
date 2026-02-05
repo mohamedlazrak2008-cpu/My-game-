@@ -3,26 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>داما مغربية - حرية الاختيار</title>
+    <title>داما مغربية - النسخة الاحترافية</title>
     <style>
-        :root { --board-dark: #7b4a35; --board-light: #f0d9b5; --player: #e74c3c; --bot: #2c3e50; }
-        body { background: #1a1a1a; color: white; text-align: center; font-family: sans-serif; margin: 0; touch-action: manipulation; }
-        .status { background: #333; padding: 15px; font-weight: bold; border-bottom: 2px solid #555; color: #2ecc71; }
-        .board { display: grid; grid-template-columns: repeat(8, 1fr); width: 95vw; height: 95vw; max-width: 450px; max-height: 450px; margin: 20px auto; border: 10px solid #5d3a2a; }
-        .cell { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; }
+        :root { 
+            --board-dark: #5d3a2a; 
+            --board-light: #e0c091; 
+            --player: #b22222; 
+            --bot: #222; 
+        }
+        body { 
+            background: #121212; color: white; text-align: center; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            margin: 0; touch-action: manipulation; 
+        }
+        .status { background: #222; padding: 15px; font-weight: bold; border-bottom: 3px solid #444; color: #f1c40f; font-size: 1.1rem; }
+        .board-container { display: flex; justify-content: center; padding: 10px; }
+        .board { 
+            display: grid; grid-template-columns: repeat(8, 1fr); 
+            width: 95vw; height: 95vw; max-width: 450px; max-height: 450px; 
+            border: 12px solid #3e2723; box-shadow: 0 15px 35px rgba(0,0,0,0.8);
+        }
+        .cell { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; position: relative; }
         .dark { background: var(--board-dark); }
         .light { background: var(--board-light); }
-        .piece { width: 80%; height: 80%; border-radius: 50%; border: 2px solid #fff; transition: 0.2s; position: relative; }
-        .red { background: var(--player); }
-        .black-piece { background: var(--bot); }
-        .king::after { content: '👑'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 1.2rem; }
-        .selected { transform: scale(1.1); box-shadow: 0 0 15px yellow; }
-        button { padding: 12px 25px; border-radius: 5px; background: #e67e22; color: white; border: none; margin-top: 10px; }
+        .piece { 
+            width: 82%; height: 82%; border-radius: 50%; 
+            border: 2px solid rgba(255,255,255,0.2); 
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            position: relative; box-shadow: 0 4px 0 #000;
+        }
+        .red { background: var(--player); background: radial-gradient(circle at 30% 30%, #ff4b2b, #b22222); }
+        .black-piece { background: var(--bot); background: radial-gradient(circle at 30% 30%, #444, #000); }
+        .king::after { content: '👑'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 1.3rem; text-shadow: 0 2px 2px #000; }
+        .selected { transform: scale(1.1); box-shadow: 0 0 20px #f1c40f; border: 3px solid #f1c40f !important; z-index: 10; }
+        button { 
+            padding: 12px 30px; border-radius: 30px; background: #5d3a2a; 
+            color: white; border: 2px solid #e0c091; font-size: 1rem; 
+            margin-top: 20px; cursor: pointer; font-weight: bold;
+        }
     </style>
 </head>
 <body>
-    <div class="status" id="status">العب بحرية - الأكل ليس إجبارياً</div>
-    <div class="board" id="board"></div>
+    <div class="status" id="status">داما مغربية - دورك الآن</div>
+    <div class="board-container">
+        <div class="board" id="board"></div>
+    </div>
     <button onclick="location.reload()">إعادة اللعبة</button>
 
     <script>
@@ -64,34 +89,46 @@
             if (board[i] && board[i].color === 'player') {
                 selected = i;
             } else if (selected !== null) {
-                let move = findValidMove(selected, i, 'player');
+                let move = validateMove(selected, i, 'player');
                 if (move) {
                     executeMove(move);
                     turn = 'bot';
-                    statusEl.innerText = "دور البوت...";
-                    setTimeout(botMove, 700);
+                    statusEl.innerText = "البوت يفكر...";
+                    setTimeout(botMove, 800);
                 }
             }
             render();
         }
 
-        function findValidMove(from, to, color) {
+        function validateMove(from, to, color) {
             if (board[to]) return null;
+            let p = board[from];
             let r1 = Math.floor(from/8), c1 = from%8;
             let r2 = Math.floor(to/8), c2 = to%8;
-            let dr = r2 - r1, dc = Math.abs(c2 - c1);
+            let dr = r2 - r1, dc = c2 - c1;
 
-            // حركة عادية (مربع واحد)
-            if (dc === 1) {
-                if (board[from].king || (color === 'player' && dr === -1) || (color === 'bot' && dr === 1)) {
-                    return { f: from, t: to };
+            if (!p.king) {
+                // البيدق العادي: حركة للأمام فقط
+                if (Math.abs(dc) === 1 && dr === (color === 'player' ? -1 : 1)) return { f: from, t: to };
+                // الأكل: للأمام فقط (مربعين)
+                if (Math.abs(dc) === 2 && dr === (color === 'player' ? -2 : 2)) {
+                    let mid = (from + to) / 2;
+                    if (board[mid] && board[mid].color !== color) return { f: from, t: to, m: mid };
                 }
-            }
-            // قفزة أكل (مربعين)
-            if (dc === 2 && Math.abs(dr) === 2) {
-                let mid = (from + to) / 2;
-                if (board[mid] && board[mid].color !== color) {
-                    return { f: from, t: to, m: mid };
+            } else {
+                // الملك: حركة في كل الاتجاهات ولأي مسافة
+                if (Math.abs(dr) === Math.abs(dc)) {
+                    let stepR = dr / Math.abs(dr), stepC = dc / Math.abs(dc);
+                    let mid = null, count = 0;
+                    for (let step = 1; step < Math.abs(dr); step++) {
+                        let idx = (r1 + step * stepR) * 8 + (c1 + step * stepC);
+                        if (board[idx]) {
+                            if (board[idx].color !== color) { count++; mid = idx; }
+                            else return null;
+                        }
+                    }
+                    if (count === 0) return { f: from, t: to };
+                    if (count === 1) return { f: from, t: to, m: mid };
                 }
             }
             return null;
@@ -107,30 +144,22 @@
         }
 
         function botMove() {
-            let allMoves = [];
+            let moves = [];
             board.forEach((p, i) => {
                 if (p && p.color === 'bot') {
-                    let targets = [i+7, i+9, i+14, i+18, i-7, i-9, i-14, i-18];
-                    targets.forEach(t => {
-                        if (t>=0 && t<64) {
-                            let m = findValidMove(i, t, 'bot');
-                            if (m) allMoves.push(m);
-                        }
-                    });
+                    for (let t = 0; t < 64; t++) {
+                        let m = validateMove(i, t, 'bot');
+                        if (m) moves.push(m);
+                    }
                 }
             });
-            
-            if (allMoves.length) {
-                // البوت يفضل الأكل إذا وجده، لكنه غير مجبر برمجياً إذا لم يجد هدفاً
-                let jumps = allMoves.filter(m => m.m);
-                let finalMove = jumps.length ? jumps[Math.floor(Math.random()*jumps.length)] : allMoves[Math.floor(Math.random()*allMoves.length)];
-                executeMove(finalMove);
+            if (moves.length) {
+                let jumps = moves.filter(m => m.m);
+                let final = jumps.length ? jumps[Math.floor(Math.random()*jumps.length)] : moves[Math.floor(Math.random()*moves.length)];
+                executeMove(final);
             }
-            turn = 'player';
-            statusEl.innerText = "دورك الآن";
-            render();
+            turn = 'player'; statusEl.innerText = "دورك الآن"; render();
         }
-
         init();
     </script>
 </body>
