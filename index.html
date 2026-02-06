@@ -7,58 +7,57 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <title>Dama Morocco Pro</title>
 
+    <!-- ملف manifest لتطبيق PWA -->
     <link rel="manifest" href='data:application/manifest+json,{"name":"Dama Morocco","short_name":"Dama","start_url":".","display":"standalone","background_color":"#121212","theme_color":"#3e2723","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/3211/3211231.png","sizes":"512x512","type":"image/png"}]}'>
 
-    <style> 
-
     <style>
-:root{--wood:#3e2723;--dark:#5d3a2a;--light:#e0c091;--gold:#f1c40f}
-*{box-sizing:border-box;user-select:none; -webkit-tap-highlight-color:transparent;}
-body{
-    margin:0;background:#121212;color:#fff;font-family:system-ui;
-    display:flex;flex-direction:column;height:100vh;
-    align-items:center;justify-content:flex-start;overflow:hidden;
-}
+        :root{--wood:#3e2723;--dark:#5d3a2a;--light:#e0c091;--gold:#f1c40f}
+        *{box-sizing:border-box;user-select:none;-webkit-tap-highlight-color:transparent;}
+        body{
+            margin:0;background:#121212;color:#fff;font-family:system-ui;
+            display:flex;flex-direction:column;height:100vh;
+            align-items:center;justify-content:flex-start;overflow:hidden;
+        }
 
-.header{width:100%; background:#1e1e1e;padding:15px 10px;border-bottom:3px solid #333}
-.score-board{display:flex;justify-content:space-around;margin-top:10px}
-.score-item{background:#2c2c2c;padding:8px 18px;border-radius:12px;border:1px solid #444; font-size:1.1rem}
-.score-val{color:var(--gold);font-weight:bold}
+        .header{width:100%;background:#1e1e1e;padding:15px 10px;border-bottom:3px solid #333}
+        .score-board{display:flex;justify-content:space-around;margin-top:10px}
+        .score-item{background:#2c2c2c;padding:8px 18px;border-radius:12px;border:1px solid #444;font-size:1.1rem}
+        .score-val{color:var(--gold);font-weight:bold}
 
-.board-wrap{
-    flex:1;display:flex;justify-content:center;align-items:center;
-    width:100%;padding:10px;
-}
-.board{
-    display:grid;grid-template-columns:repeat(8,1fr);
-    width:95vw;height:95vw; /* تجعلها تأخذ عرض الشاشة بالكامل */
-    max-width:450px;max-height:450px;
-    border:8px solid var(--wood);background:var(--wood);
-    box-shadow:0 10px 40px rgba(0,0,0,.8);
-}
+        .board-wrap{
+            flex:1;display:flex;justify-content:center;align-items:center;
+            width:100%;padding:10px;
+        }
+        .board{
+            display:grid;grid-template-columns:repeat(8,1fr);
+            width:95vw;height:95vw;
+            max-width:450px;max-height:450px;
+            border:8px solid var(--wood);background:var(--wood);
+            box-shadow:0 10px 40px rgba(0,0,0,.8);
+        }
 
-.cell{display:flex;align-items:center;justify-content:center;aspect-ratio:1/1;}
-.dark{background:var(--dark)}
-.light{background:var(--light)}
+        .cell{display:flex;align-items:center;justify-content:center;aspect-ratio:1/1;}
+        .dark{background:var(--dark)}
+        .light{background:var(--light)}
 
-.piece{
-    width:85%;height:85%;border-radius:50%;
-    transition:0.2s;position:relative;
-    box-shadow: inset 0 -4px 6px rgba(0,0,0,0.4), 0 4px 6px rgba(0,0,0,0.3);
-}
-.white{background:radial-gradient(circle at 30% 30%, #ffffff, #999)}
-.black{background:radial-gradient(circle at 30% 30%, #444, #000)}
+        .piece{
+            width:85%;height:85%;border-radius:50%;
+            transition:0.2s;position:relative;
+            box-shadow: inset 0 -4px 6px rgba(0,0,0,0.4), 0 4px 6px rgba(0,0,0,0.3);
+        }
+        .white{background:radial-gradient(circle at 30% 30%, #ffffff, #999)}
+        .black{background:radial-gradient(circle at 30% 30%, #444, #000)}
 
-.king::after{content:"👑";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:1.2rem}
-.sel{outline:4px solid var(--gold);transform:scale(1.1);z-index:10}
-.must{outline:3px solid #ff4757}
+        .king::after{content:"👑";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:1.2rem}
+        .sel{outline:4px solid var(--gold);transform:scale(1.1);z-index:10}
+        .must{outline:3px solid #ff4757}
 
-#overlay{
-    display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);
-    flex-direction:column;justify-content:center;align-items:center;z-index:100;
-}
-.btn{padding:15px 40px;border-radius:30px;background:#c0392b;color:white;border:none;font-weight:bold;font-size:1.2rem;cursor:pointer}
- 
+        #overlay{
+            display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);
+            flex-direction:column;justify-content:center;align-items:center;z-index:100;
+        }
+        .btn{padding:15px 40px;border-radius:30px;background:#c0392b;color:white;border:none;font-weight:bold;font-size:1.2rem;cursor:pointer}
+    </style>
 </head>
 
 <body>
@@ -78,13 +77,6 @@ body{
     </div>
 
 <script>
-    // استدعاء ملف sw.js بشكل صحيح لتمكين التثبيت
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js').then(() => {
-            console.log("Service Worker Registered");
-        });
-    }
-
     const B=document.getElementById("board");
     const statusEl=document.getElementById("status");
     const psEl=document.getElementById("ps");
@@ -187,86 +179,4 @@ body{
         }
         multi=false; turn="bot"; lock=true;
         statusEl.textContent="تفكير البوت...";
-        draw(); setTimeout(botTurn,400);
-    }
-
-    function doMove(m){
-        board[m.t]=board[m.f]; board[m.f]=null;
-        if(m.cap!==undefined) board[m.cap]=null;
-        let r=m.t>>3;
-        if((board[m.t].c==="player"&&r===0)||(board[m.t].c==="bot"&&r===7))
-            board[m.t].k=1;
-        sel=null;
-    }
-
-    function hasCap(f,c){
-        for(let t=0;t<64;t++){
-            let m=valMove(f,t,c);
-            if(m&&m.cap!==undefined) return true;
-        }
-        return false;
-    }
-
-    function botTurn(){
-        scanMandatory();
-        let moves = mandatory.length ? mandatory : allMoves("bot");
-        if(!moves.length){ win("ربحت!"); return; }
-        moves.sort((a,b)=>scoreMove(b)-scoreMove(a));
-        let m=moves[0];
-        doMove(m);
-        if(m.cap!==undefined && hasCap(m.t,"bot")){
-            setTimeout(botTurn,300); return;
-        }
-        turn="player"; lock=false; scanMandatory();
-        statusEl.textContent="دورك";
-        draw(); checkEnd();
-    }
-
-    function allMoves(c){
-        let arr=[];
-        for(let i=0;i<64;i++)
-            if(board[i]&&board[i].c===c)
-                for(let t=0;t<64;t++){
-                    let m=valMove(i,t,c);
-                    if(m) arr.push(m);
-                }
-        return arr;
-    }
-
-    function scoreMove(m){
-        let s=0; if(m.cap!==undefined) s+=10;
-        let r=m.t>>3; if((turn==="bot"&&r===7)) s+=3;
-        return s+Math.random();
-    }
-
-    function checkEnd(){
-        let p=0,b=0;
-        board.forEach(x=>{if(x){x.c==="player"?p++:b++}});
-        if(!p) win("خسرت");
-        if(!b) win("ربحت");
-    }
-
-    function win(msg){
-        document.getElementById("overlay").style.display="flex";
-        document.getElementById("win").textContent=msg;
-        if(msg.includes("ربحت")){ps++;localStorage.ps=ps}
-        else{bs++;localStorage.bs=bs}
-        psEl.textContent=ps; bsEl.textContent=bs;
-    }
-
-    function resetGame(){
-        document.getElementById("overlay").style.display="none";
-        init();
-    }
-
-    init();
-    <if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js')
-    .then(() => console.log("اللعبة جاهزة للعمل بدون نت!"))
-    .catch((err) => console.log("خطأ في التثبيت:", err));
-}
-
-    
-    >
-</body>
-</html>
+        draw(); setTimeout(botTurn,400
